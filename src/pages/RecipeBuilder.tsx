@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { 
   ArrowRight, 
@@ -13,23 +13,24 @@ import {
   Droplets, 
   Scale, 
   Wheat,
-  Loader2 
+  Info
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { stybelFlours, StybelFlour, glutenLevelLabels } from '@/data/stybel-flours';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-interface FlourBreakdown {
-  white: number;
-  whole: number;
-  semolina: number;
-  rye: number;
-  other: number;
+interface FlourMix {
+  flourId: string;
+  percentage: number;
 }
 
 export default function RecipeBuilder() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   
   const [name, setName] = useState('');
   const [flourTotal, setFlourTotal] = useState(500);
@@ -37,15 +38,15 @@ export default function RecipeBuilder() {
   const [starter, setStarter] = useState(100);
   const [salt, setSalt] = useState(10);
   const [notes, setNotes] = useState('');
-  const [saving, setSaving] = useState(false);
   
-  const [flourBreakdown, setFlourBreakdown] = useState<FlourBreakdown>({
-    white: 100,
-    whole: 0,
-    semolina: 0,
-    rye: 0,
-    other: 0,
-  });
+  const [flourMix, setFlourMix] = useState<FlourMix[]>([
+    { flourId: 'stybel-2', percentage: 100 }
+  ]);
+
+  const selectedFlours = flourMix.map(mix => ({
+    ...mix,
+    flour: stybelFlours.find(f => f.id === mix.flourId)!
+  })).filter(m => m.flour);
 
   // Calculate baker's percentages
   const calculations = useMemo(() => {
@@ -54,12 +55,21 @@ export default function RecipeBuilder() {
     const starterPercent = ((starter / flourTotal) * 100).toFixed(1);
     const totalDough = flourTotal + water + starter + salt;
     
-    // Assuming starter is 100% hydration (50% flour, 50% water)
     const starterFlour = starter / 2;
     const starterWater = starter / 2;
     const totalFlour = flourTotal + starterFlour;
     const totalWater = water + starterWater;
     const trueHydration = ((totalWater / totalFlour) * 100).toFixed(1);
+
+    // Calculate weighted protein
+    const avgProtein = selectedFlours.reduce((sum, m) => 
+      sum + (m.flour.proteinPercent * m.percentage / 100), 0
+    ).toFixed(1);
+
+    // Calculate hydration adjustment
+    const hydrationAdjust = selectedFlours.reduce((sum, m) => 
+      sum + (m.flour.hydrationAdjustment * m.percentage / 100), 0
+    ).toFixed(0);
 
     return {
       hydration,
@@ -67,61 +77,57 @@ export default function RecipeBuilder() {
       saltPercent,
       starterPercent,
       totalDough,
+      avgProtein,
+      hydrationAdjust: Number(hydrationAdjust),
     };
-  }, [flourTotal, water, starter, salt]);
+  }, [flourTotal, water, starter, salt, selectedFlours]);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!name.trim()) {
       toast.error('נא להזין שם למתכון');
       return;
     }
 
-    setSaving(true);
-    try {
-      const { error } = await supabase.from('recipes').insert([{
-        user_id: user!.id,
-        name: name.trim(),
-        flour_total_g: flourTotal,
-        water_g: water,
-        starter_g: starter,
-        salt_g: salt,
-        flour_breakdown: flourBreakdown as any,
-        notes: notes.trim() || null,
-      }]);
+    const recipe = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      flour_total_g: flourTotal,
+      water_g: water,
+      starter_g: starter,
+      salt_g: salt,
+      flour_mix: flourMix,
+      notes: notes.trim(),
+      created_at: new Date().toISOString(),
+    };
 
-      if (error) throw error;
+    const saved = localStorage.getItem('sourdough_recipes');
+    const recipes = saved ? JSON.parse(saved) : [];
+    recipes.unshift(recipe);
+    localStorage.setItem('sourdough_recipes', JSON.stringify(recipes));
 
-      toast.success('המתכון נשמר בהצלחה! 🍞');
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      navigate('/recipes');
-    } catch (error) {
-      toast.error('שגיאה בשמירת המתכון');
-    } finally {
-      setSaving(false);
-    }
+    toast.success('המתכון נשמר בהצלחה! 🍞');
+    navigate('/recipes');
   };
 
-  const updateFlourType = (type: keyof FlourBreakdown, value: number) => {
-    const total = Object.entries(flourBreakdown)
-      .filter(([key]) => key !== type)
-      .reduce((sum, [, v]) => sum + v, 0);
-    
-    if (total + value > 100) {
-      // Adjust white flour to compensate
-      const excess = total + value - 100;
-      if (type !== 'white') {
-        setFlourBreakdown(prev => ({
-          ...prev,
-          [type]: value,
-          white: Math.max(0, prev.white - excess),
-        }));
-      }
-    } else {
-      setFlourBreakdown(prev => ({
-        ...prev,
-        [type]: value,
-      }));
-    }
+  const updateFlourMix = (index: number, flourId: string) => {
+    const newMix = [...flourMix];
+    newMix[index].flourId = flourId;
+    setFlourMix(newMix);
+  };
+
+  const addFlour = () => {
+    if (flourMix.length >= 3) return;
+    const remaining = 100 - flourMix.reduce((s, m) => s + m.percentage, 0);
+    setFlourMix([...flourMix, { flourId: 'stybel-650', percentage: Math.max(0, remaining) }]);
+  };
+
+  const removeFlour = (index: number) => {
+    if (flourMix.length <= 1) return;
+    const newMix = flourMix.filter((_, i) => i !== index);
+    // Redistribute to first flour
+    const total = newMix.reduce((s, m) => s + m.percentage, 0);
+    if (total < 100) newMix[0].percentage += (100 - total);
+    setFlourMix(newMix);
   };
 
   return (
@@ -177,143 +183,142 @@ export default function RecipeBuilder() {
             <div className="text-sm text-muted-foreground">מלח</div>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-border text-center">
-          <div className="text-lg font-semibold text-foreground">
-            {calculations.totalDough}g
+        
+        {/* Flour info */}
+        <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
+          <div className="text-center flex-1">
+            <div className="text-lg font-semibold">{calculations.totalDough}g</div>
+            <div className="text-xs text-muted-foreground">משקל בצק</div>
           </div>
-          <div className="text-sm text-muted-foreground">משקל בצק סופי</div>
+          <div className="text-center flex-1">
+            <div className="text-lg font-semibold text-wheat">{calculations.avgProtein}%</div>
+            <div className="text-xs text-muted-foreground">חלבון ממוצע</div>
+          </div>
+          {calculations.hydrationAdjust !== 0 && (
+            <div className="text-center flex-1">
+              <div className="text-lg font-semibold text-timer">
+                {calculations.hydrationAdjust > 0 ? '+' : ''}{calculations.hydrationAdjust}%
+              </div>
+              <div className="text-xs text-muted-foreground">התאמת הידרציה</div>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Flour Selection */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="section-title flex items-center gap-2">
+            <Wheat className="h-4 w-4" />
+            בחירת קמחים
+          </h3>
+          {flourMix.length < 3 && (
+            <Button variant="outline" size="sm" onClick={addFlour}>
+              + הוסף קמח
+            </Button>
+          )}
+        </div>
+
+        {flourMix.map((mix, index) => {
+          const flour = stybelFlours.find(f => f.id === mix.flourId);
+          return (
+            <div key={index} className="bread-card-flat space-y-3">
+              <div className="flex items-center gap-2">
+                <Select value={mix.flourId} onValueChange={(v) => updateFlourMix(index, v)}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stybelFlours.filter(f => f.category !== 'specialty').map(f => (
+                      <SelectItem key={f.id} value={f.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{f.hebrewName}</span>
+                          <Badge variant="outline" className="text-xs">{f.proteinPercent}%</Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {flourMix.length > 1 && (
+                  <Button variant="ghost" size="sm" onClick={() => removeFlour(index)}>✕</Button>
+                )}
+              </div>
+              
+              {flour && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Info className="h-3 w-3" />
+                  גלוטן {glutenLevelLabels[flour.glutenLevel]} • {flour.bestFor.slice(0, 2).join(', ')}
+                </div>
+              )}
+
+              <div className="flex items-center gap-4">
+                <Slider
+                  value={[mix.percentage]}
+                  onValueChange={([v]) => {
+                    const newMix = [...flourMix];
+                    newMix[index].percentage = v;
+                    setFlourMix(newMix);
+                  }}
+                  max={100}
+                  step={5}
+                  className="flex-1"
+                />
+                <span className="w-12 text-left font-rubik font-semibold">{mix.percentage}%</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Ingredients */}
       <div className="space-y-4">
-        <h3 className="section-title flex items-center gap-2">
-          <Wheat className="h-4 w-4" />
-          מרכיבים
-        </h3>
+        <h3 className="section-title">כמויות</h3>
 
-        {/* Flour Total */}
         <div className="bread-card-flat">
           <div className="flex items-center justify-between mb-2">
             <Label className="font-medium">קמח כולל</Label>
             <span className="text-lg font-semibold font-rubik">{flourTotal}g</span>
           </div>
-          <Slider
-            value={[flourTotal]}
-            onValueChange={([v]) => setFlourTotal(v)}
-            min={200}
-            max={2000}
-            step={10}
-            className="mt-2"
-          />
+          <Slider value={[flourTotal]} onValueChange={([v]) => setFlourTotal(v)} min={200} max={2000} step={10} />
         </div>
 
-        {/* Water */}
         <div className="bread-card-flat">
           <div className="flex items-center justify-between mb-2">
             <Label className="font-medium flex items-center gap-2">
-              <Droplets className="h-4 w-4 text-timer" />
-              מים
+              <Droplets className="h-4 w-4 text-timer" /> מים
             </Label>
             <span className="text-lg font-semibold font-rubik">{water}g</span>
           </div>
-          <Slider
-            value={[water]}
-            onValueChange={([v]) => setWater(v)}
-            min={100}
-            max={1500}
-            step={5}
-            className="mt-2"
-          />
+          <Slider value={[water]} onValueChange={([v]) => setWater(v)} min={100} max={1500} step={5} />
         </div>
 
-        {/* Starter */}
         <div className="bread-card-flat">
           <div className="flex items-center justify-between mb-2">
-            <Label className="font-medium flex items-center gap-2">
-              <Wheat className="h-4 w-4 text-starter" />
-              מחמצת
-            </Label>
+            <Label className="font-medium">מחמצת</Label>
             <span className="text-lg font-semibold font-rubik">{starter}g</span>
           </div>
-          <Slider
-            value={[starter]}
-            onValueChange={([v]) => setStarter(v)}
-            min={20}
-            max={500}
-            step={5}
-            className="mt-2"
-          />
+          <Slider value={[starter]} onValueChange={([v]) => setStarter(v)} min={20} max={500} step={5} />
         </div>
 
-        {/* Salt */}
         <div className="bread-card-flat">
           <div className="flex items-center justify-between mb-2">
             <Label className="font-medium">מלח</Label>
             <span className="text-lg font-semibold font-rubik">{salt}g</span>
           </div>
-          <Slider
-            value={[salt]}
-            onValueChange={([v]) => setSalt(v)}
-            min={0}
-            max={50}
-            step={0.5}
-            className="mt-2"
-          />
+          <Slider value={[salt]} onValueChange={([v]) => setSalt(v)} min={0} max={50} step={0.5} />
         </div>
-      </div>
-
-      {/* Flour Breakdown */}
-      <div className="space-y-4">
-        <h3 className="section-title">פירוט קמחים (%)</h3>
-        
-        {[
-          { key: 'white', label: 'קמח לבן', color: 'text-wheat' },
-          { key: 'whole', label: 'קמח מלא', color: 'text-crust' },
-          { key: 'semolina', label: 'סמולינה', color: 'text-honey' },
-          { key: 'rye', label: 'שיפון', color: 'text-muted-foreground' },
-        ].map(({ key, label, color }) => (
-          <div key={key} className="flex items-center gap-4">
-            <Label className={`w-20 text-sm ${color}`}>{label}</Label>
-            <Slider
-              value={[flourBreakdown[key as keyof FlourBreakdown]]}
-              onValueChange={([v]) => updateFlourType(key as keyof FlourBreakdown, v)}
-              max={100}
-              step={5}
-              className="flex-1"
-            />
-            <span className="w-12 text-left font-rubik">
-              {flourBreakdown[key as keyof FlourBreakdown]}%
-            </span>
-          </div>
-        ))}
       </div>
 
       {/* Notes */}
       <div>
         <Label className="input-label">הערות</Label>
-        <Textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="טיפים, שינויים, מה לזכור..."
-          rows={3}
-        />
+        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="טיפים, שינויים..." rows={3} />
       </div>
 
       {/* Save Button */}
-      <Button
-        onClick={handleSave}
-        disabled={saving}
-        className="w-full h-12 gradient-crust text-primary-foreground hover:opacity-90"
-      >
-        {saving ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <>
-            <Save className="h-5 w-5 ml-2" />
-            שמור מתכון
-          </>
-        )}
+      <Button onClick={handleSave} className="w-full h-12 gradient-crust text-primary-foreground">
+        <Save className="h-5 w-5 ml-2" />
+        שמור מתכון
       </Button>
     </div>
   );
