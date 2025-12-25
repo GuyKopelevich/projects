@@ -1,31 +1,30 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronLeft, Star, Loader2, Image as ImageIcon } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { Plus, ChevronLeft, Star, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
+interface Bake {
+  id: string;
+  name: string;
+  recipe_name?: string;
+  status: string;
+  rating?: number;
+  created_at: string;
+}
+
 export default function BakesLog() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const [bakes, setBakes] = useState<Bake[]>([]);
 
-  const { data: bakes, isLoading } = useQuery({
-    queryKey: ['bakes', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bakes')
-        .select('*, recipes(name)')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
+  useEffect(() => {
+    const stored = localStorage.getItem('bakes');
+    if (stored) {
+      setBakes(JSON.parse(stored));
+    }
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -45,14 +44,6 @@ export default function BakesLog() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -67,7 +58,7 @@ export default function BakesLog() {
         </Button>
       </div>
 
-      {bakes && bakes.length > 0 ? (
+      {bakes.length > 0 ? (
         <div className="space-y-3">
           {bakes.map((bake) => (
             <div
@@ -79,7 +70,7 @@ export default function BakesLog() {
                 <div>
                   <h3 className="font-semibold text-lg">{bake.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {bake.recipes?.name || 'מתכון מותאם אישית'}
+                    {bake.recipe_name || 'מתכון מותאם אישית'}
                   </p>
                 </div>
                 <span className={cn(

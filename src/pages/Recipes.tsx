@@ -1,40 +1,59 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronLeft, BookOpen, Loader2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { Plus, ChevronLeft, BookOpen } from 'lucide-react';
+
+interface Recipe {
+  id: string;
+  name: string;
+  flour_total_g: number;
+  water_g: number;
+  starter_g: number;
+  salt_g: number;
+  flour_breakdown?: Record<string, number>;
+  notes?: string;
+  is_sample?: boolean;
+  created_at: string;
+}
+
+const SAMPLE_RECIPES: Recipe[] = [
+  {
+    id: 'sample-1',
+    name: 'לחם לבן קלאסי',
+    flour_total_g: 500,
+    water_g: 350,
+    starter_g: 100,
+    salt_g: 10,
+    flour_breakdown: { 'לבן 70': 100 },
+    is_sample: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'sample-2',
+    name: 'לחם סמולינה',
+    flour_total_g: 500,
+    water_g: 325,
+    starter_g: 100,
+    salt_g: 10,
+    flour_breakdown: { 'לבן 70': 70, 'סמולינה': 30 },
+    is_sample: true,
+    created_at: new Date().toISOString(),
+  },
+];
 
 export default function Recipes() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
 
-  const { data: recipes, isLoading } = useQuery({
-    queryKey: ['recipes', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('recipes')
-        .select('*')
-        .or(`user_id.eq.${user!.id},is_sample.eq.true`)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
+  useEffect(() => {
+    const stored = localStorage.getItem('recipes');
+    const userRecipes = stored ? JSON.parse(stored) : [];
+    setRecipes([...SAMPLE_RECIPES, ...userRecipes]);
+  }, []);
 
   const calculateHydration = (water: number, flour: number) => {
     return ((water / flour) * 100).toFixed(0);
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -50,7 +69,7 @@ export default function Recipes() {
         </Button>
       </div>
 
-      {recipes && recipes.length > 0 ? (
+      {recipes.length > 0 ? (
         <div className="space-y-3">
           {recipes.map((recipe) => (
             <div
