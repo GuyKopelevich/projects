@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,12 +7,9 @@ import { toast } from 'sonner';
 import { 
   Plus, 
   Wheat, 
-  Loader2,
   TrendingUp,
   Clock
 } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -33,11 +28,22 @@ import {
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 
+interface StarterFeed {
+  id: string;
+  fed_at: string;
+  flour_g: number;
+  water_g: number;
+  ratio: string;
+  temp_c: number;
+  height_before_cm?: number;
+  height_peak_cm?: number;
+  peak_after_hours?: number;
+  notes?: string;
+}
+
 export default function StarterTracker() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const [feeds, setFeeds] = useState<StarterFeed[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   // Form state
   const [flour, setFlour] = useState(50);
@@ -49,24 +55,15 @@ export default function StarterTracker() {
   const [peakHours, setPeakHours] = useState('');
   const [notes, setNotes] = useState('');
 
-  const { data: feeds, isLoading } = useQuery({
-    queryKey: ['starterFeeds', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('starter_feeds')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('fed_at', { ascending: false })
-        .limit(30);
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
+  useEffect(() => {
+    const stored = localStorage.getItem('starterFeeds');
+    if (stored) {
+      setFeeds(JSON.parse(stored));
+    }
+  }, []);
 
   const chartData = feeds
-    ?.filter(f => f.peak_after_hours)
+    .filter(f => f.peak_after_hours)
     .slice(0, 14)
     .reverse()
     .map(f => ({
@@ -74,33 +71,27 @@ export default function StarterTracker() {
       hours: Number(f.peak_after_hours),
     }));
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const { error } = await supabase.from('starter_feeds').insert({
-        user_id: user!.id,
-        flour_g: flour,
-        water_g: water,
-        ratio,
-        temp_c: temp,
-        height_before_cm: heightBefore ? parseFloat(heightBefore) : null,
-        height_peak_cm: heightPeak ? parseFloat(heightPeak) : null,
-        peak_after_hours: peakHours ? parseFloat(peakHours) : null,
-        notes: notes.trim() || null,
-      });
+  const handleSave = () => {
+    const newFeed: StarterFeed = {
+      id: Date.now().toString(),
+      fed_at: new Date().toISOString(),
+      flour_g: flour,
+      water_g: water,
+      ratio,
+      temp_c: temp,
+      height_before_cm: heightBefore ? parseFloat(heightBefore) : undefined,
+      height_peak_cm: heightPeak ? parseFloat(heightPeak) : undefined,
+      peak_after_hours: peakHours ? parseFloat(peakHours) : undefined,
+      notes: notes.trim() || undefined,
+    };
 
-      if (error) throw error;
+    const updatedFeeds = [newFeed, ...feeds];
+    setFeeds(updatedFeeds);
+    localStorage.setItem('starterFeeds', JSON.stringify(updatedFeeds));
 
-      toast.success('הזנה נרשמה בהצלחה! 🌱');
-      queryClient.invalidateQueries({ queryKey: ['starterFeeds'] });
-      queryClient.invalidateQueries({ queryKey: ['lastFeed'] });
-      setDialogOpen(false);
-      resetForm();
-    } catch (error) {
-      toast.error('שגיאה בשמירת ההזנה');
-    } finally {
-      setSaving(false);
-    }
+    toast.success('הזנה נרשמה בהצלחה! 🌱');
+    setDialogOpen(false);
+    resetForm();
   };
 
   const resetForm = () => {
@@ -219,10 +210,9 @@ export default function StarterTracker() {
 
               <Button
                 onClick={handleSave}
-                disabled={saving}
                 className="w-full gradient-crust text-primary-foreground"
               >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'שמור'}
+                שמור
               </Button>
             </div>
           </DialogContent>
@@ -275,11 +265,7 @@ export default function StarterTracker() {
       <div className="space-y-3">
         <h2 className="section-title">היסטוריית הזנות</h2>
         
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        ) : feeds && feeds.length > 0 ? (
+        {feeds.length > 0 ? (
           feeds.map((feed) => (
             <div key={feed.id} className="bread-card-flat">
               <div className="flex items-start justify-between">

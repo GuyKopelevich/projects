@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,13 +8,10 @@ import { toast } from 'sonner';
 import { 
   ArrowRight, 
   Play, 
-  Loader2,
   Thermometer,
   Clock,
   Wheat
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Select,
   SelectContent,
@@ -24,23 +20,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const STEP_TYPES = [
-  { type: 'autolyse', title: 'אוטוליזה', duration: 30 },
-  { type: 'mix', title: 'ערבוב', duration: 10 },
-  { type: 'fold', title: 'קיפול', duration: 5 },
-  { type: 'bulk_ferment', title: 'התפחה ראשונית', duration: 240 },
-  { type: 'shape', title: 'עיצוב', duration: 15 },
-  { type: 'proof', title: 'התפחה שנייה', duration: 60 },
-  { type: 'cold_retard', title: 'קירור לילה', duration: 720 },
-  { type: 'bake_covered', title: 'אפייה עם מכסה', duration: 25 },
-  { type: 'bake_uncovered', title: 'אפייה ללא מכסה', duration: 20 },
-  { type: 'cool', title: 'קירור', duration: 60 },
+interface Recipe {
+  id: string;
+  name: string;
+}
+
+const SAMPLE_RECIPES: Recipe[] = [
+  { id: 'sample-1', name: 'לחם לבן קלאסי' },
+  { id: 'sample-2', name: 'לחם סמולינה' },
 ];
 
 export default function NewBake() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
 
   const [name, setName] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<string>('');
@@ -49,130 +41,108 @@ export default function NewBake() {
   const [foldsCount, setFoldsCount] = useState(4);
   const [bulkHours, setBulkHours] = useState(4);
   const [coldRetardHours, setColdRetardHours] = useState(12);
-  const [useAutolyse, setUseAutolyse] = useState(true);
-  const [saving, setSaving] = useState(false);
 
-  const { data: recipes } = useQuery({
-    queryKey: ['recipes', user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('recipes')
-        .select('*')
-        .or(`user_id.eq.${user!.id},is_sample.eq.true`)
-        .order('name');
-      return data || [];
-    },
-    enabled: !!user,
-  });
+  useEffect(() => {
+    const stored = localStorage.getItem('recipes');
+    const userRecipes = stored ? JSON.parse(stored) : [];
+    setRecipes([...SAMPLE_RECIPES, ...userRecipes]);
+  }, []);
 
   const generateSchedule = () => {
-    const steps: Array<{ type: string; title: string; duration: number; sort: number }> = [];
+    const steps: Array<{ id: string; type: string; title: string; duration: number; sort: number; completed: boolean }> = [];
     let sortOrder = 0;
 
     // Autolyse
-    if (useAutolyse) {
-      steps.push({ type: 'autolyse', title: 'אוטוליזה', duration: 30, sort: sortOrder++ });
-    }
+    steps.push({ id: `step-${sortOrder}`, type: 'autolyse', title: 'אוטוליזה', duration: 30, sort: sortOrder++, completed: false });
 
     // Mix
-    steps.push({ type: 'mix', title: 'ערבוב והוספת מלח', duration: 10, sort: sortOrder++ });
+    steps.push({ id: `step-${sortOrder}`, type: 'mix', title: 'ערבוב והוספת מלח', duration: 10, sort: sortOrder++, completed: false });
 
     // Folds
     const foldInterval = Math.floor((bulkHours * 60) / (foldsCount + 1));
     for (let i = 1; i <= foldsCount; i++) {
       steps.push({ 
+        id: `step-${sortOrder}`,
         type: 'fold', 
         title: `קיפול ${i}`, 
         duration: foldInterval,
-        sort: sortOrder++ 
+        sort: sortOrder++,
+        completed: false
       });
     }
 
     // Bulk ferment remainder
     steps.push({ 
+      id: `step-${sortOrder}`,
       type: 'bulk_ferment', 
       title: 'המשך התפחה ראשונית', 
       duration: foldInterval,
-      sort: sortOrder++ 
+      sort: sortOrder++,
+      completed: false
     });
 
     // Shape
-    steps.push({ type: 'shape', title: 'עיצוב', duration: 15, sort: sortOrder++ });
+    steps.push({ id: `step-${sortOrder}`, type: 'shape', title: 'עיצוב', duration: 15, sort: sortOrder++, completed: false });
 
     // Cold retard
     if (coldRetardHours > 0) {
       steps.push({ 
+        id: `step-${sortOrder}`,
         type: 'cold_retard', 
         title: 'קירור במקרר', 
         duration: coldRetardHours * 60,
-        sort: sortOrder++ 
+        sort: sortOrder++,
+        completed: false
       });
     } else {
-      steps.push({ type: 'proof', title: 'התפחה שנייה', duration: 60, sort: sortOrder++ });
+      steps.push({ id: `step-${sortOrder}`, type: 'proof', title: 'התפחה שנייה', duration: 60, sort: sortOrder++, completed: false });
     }
 
     // Bake
-    steps.push({ type: 'bake_covered', title: 'אפייה עם מכסה', duration: 25, sort: sortOrder++ });
-    steps.push({ type: 'bake_uncovered', title: 'אפייה ללא מכסה', duration: 20, sort: sortOrder++ });
+    steps.push({ id: `step-${sortOrder}`, type: 'bake_covered', title: 'אפייה עם מכסה', duration: 25, sort: sortOrder++, completed: false });
+    steps.push({ id: `step-${sortOrder}`, type: 'bake_uncovered', title: 'אפייה ללא מכסה', duration: 20, sort: sortOrder++, completed: false });
 
     // Cool
-    steps.push({ type: 'cool', title: 'קירור לפני חיתוך', duration: 60, sort: sortOrder++ });
+    steps.push({ id: `step-${sortOrder}`, type: 'cool', title: 'קירור לפני חיתוך', duration: 60, sort: sortOrder++, completed: false });
 
     return steps;
   };
 
-  const handleStart = async () => {
+  const handleStart = () => {
     if (!name.trim()) {
       toast.error('נא להזין שם לאפייה');
       return;
     }
 
-    setSaving(true);
-    try {
-      // Create bake
-      const { data: bake, error: bakeError } = await supabase
-        .from('bakes')
-        .insert({
-          user_id: user!.id,
-          recipe_id: selectedRecipe || null,
-          name: name.trim(),
-          room_temp_c: roomTemp,
-          starter_strength: starterStrength,
-          folds_count: foldsCount,
-          bulk_target_hours: bulkHours,
-          cold_retard_hours: coldRetardHours,
-          status: 'in_progress',
-        })
-        .select()
-        .single();
+    const bakeId = Date.now().toString();
+    const selectedRecipeName = recipes.find(r => r.id === selectedRecipe)?.name;
+    
+    const newBake = {
+      id: bakeId,
+      name: name.trim(),
+      recipe_id: selectedRecipe || null,
+      recipe_name: selectedRecipeName,
+      room_temp_c: roomTemp,
+      starter_strength: starterStrength,
+      folds_count: foldsCount,
+      bulk_target_hours: bulkHours,
+      cold_retard_hours: coldRetardHours,
+      status: 'in_progress',
+      created_at: new Date().toISOString(),
+    };
 
-      if (bakeError) throw bakeError;
+    const steps = generateSchedule();
 
-      // Create steps
-      const steps = generateSchedule();
-      const { error: stepsError } = await supabase
-        .from('bake_steps')
-        .insert(
-          steps.map(step => ({
-            bake_id: bake.id,
-            step_type: step.type,
-            title: step.title,
-            duration_minutes: step.duration,
-            sort_order: step.sort,
-          }))
-        );
+    // Save bake
+    const storedBakes = localStorage.getItem('bakes');
+    const bakes = storedBakes ? JSON.parse(storedBakes) : [];
+    localStorage.setItem('bakes', JSON.stringify([newBake, ...bakes]));
 
-      if (stepsError) throw stepsError;
+    // Save steps
+    localStorage.setItem(`bakeSteps-${bakeId}`, JSON.stringify(steps));
 
-      toast.success('האפייה התחילה! 🍞');
-      queryClient.invalidateQueries({ queryKey: ['bakes'] });
-      queryClient.invalidateQueries({ queryKey: ['activeBake'] });
-      navigate(`/bake/${bake.id}`);
-    } catch (error) {
-      toast.error('שגיאה ביצירת האפייה');
-    } finally {
-      setSaving(false);
-    }
+    toast.success('האפייה התחילה! 🍞');
+    navigate(`/bake/${bakeId}`);
   };
 
   return (
@@ -203,7 +173,7 @@ export default function NewBake() {
             <SelectValue placeholder="בחר מתכון..." />
           </SelectTrigger>
           <SelectContent>
-            {recipes?.map((recipe) => (
+            {recipes.map((recipe) => (
               <SelectItem key={recipe.id} value={recipe.id}>
                 {recipe.name}
               </SelectItem>
@@ -248,7 +218,7 @@ export default function NewBake() {
             ].map(({ value, label }) => (
               <button
                 key={value}
-                onClick={() => setStarterStrength(value as any)}
+                onClick={() => setStarterStrength(value as 'weak' | 'medium' | 'strong')}
                 className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                   starterStrength === value
                     ? 'bg-primary text-primary-foreground'
@@ -313,17 +283,10 @@ export default function NewBake() {
       {/* Start Button */}
       <Button
         onClick={handleStart}
-        disabled={saving}
         className="w-full h-14 gradient-golden text-accent-foreground font-semibold text-lg shadow-glow hover:opacity-90"
       >
-        {saving ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <>
-            <Play className="h-5 w-5 ml-2" />
-            התחל אפייה
-          </>
-        )}
+        <Play className="h-5 w-5 ml-2" />
+        התחל אפייה
       </Button>
     </div>
   );
