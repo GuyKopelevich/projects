@@ -122,7 +122,7 @@ export default function Dashboard() {
       {/* Quick Calculators */}
       <div className="space-y-3">
         <h2 className="section-title">מחשבונים וכלים</h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           <button
             onClick={() => navigate('/calculator/hydration')}
             className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
@@ -135,14 +135,21 @@ export default function Dashboard() {
             className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
           >
             <Scale className="h-6 w-6 text-honey" />
-            <span className="text-xs font-medium">שינוי כמות</span>
+            <span className="text-xs font-medium">כמות</span>
           </button>
           <button
             onClick={() => navigate('/calculator/temperature')}
             className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
           >
             <Thermometer className="h-6 w-6 text-crust" />
-            <span className="text-xs font-medium">טמפרטורה</span>
+            <span className="text-xs font-medium">טמפ׳</span>
+          </button>
+          <button
+            onClick={() => navigate('/bread-guide')}
+            className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
+          >
+            <BookOpen className="h-6 w-6 text-starter" />
+            <span className="text-xs font-medium">מדריך</span>
           </button>
         </div>
       </div>
