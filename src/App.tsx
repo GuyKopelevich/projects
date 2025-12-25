@@ -14,6 +14,7 @@ import NewBake from "./pages/NewBake";
 import ActiveBake from "./pages/ActiveBake";
 import Calculator from "./pages/Calculator";
 import FlourGuide from "./pages/FlourGuide";
+import BreadGuide from "./pages/BreadGuide";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/bake/:id" element={<AppLayout><ActiveBake /></AppLayout>} />
           <Route path="/calculator/:type" element={<AppLayout><Calculator /></AppLayout>} />
           <Route path="/flours" element={<AppLayout><FlourGuide /></AppLayout>} />
+          <Route path="/bread-guide" element={<AppLayout><BreadGuide /></AppLayout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
