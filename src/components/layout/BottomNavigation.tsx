@@ -1,13 +1,13 @@
-import { Home, ChefHat, BookOpen, Wheat, ClipboardList } from 'lucide-react';
+import { Home, ChefHat, BookOpen, Wheat, Settings } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { path: '/', icon: Home, label: 'בית' },
-  { path: '/bake', icon: ChefHat, label: 'אפייה' },
+  { path: '/bake/new', icon: ChefHat, label: 'אפייה' },
   { path: '/recipes', icon: BookOpen, label: 'מתכונים' },
   { path: '/starter', icon: Wheat, label: 'מחמצת' },
-  { path: '/log', icon: ClipboardList, label: 'יומן' },
+  { path: '/settings', icon: Settings, label: 'הגדרות' },
 ];
 
 export function BottomNavigation() {
