@@ -132,11 +132,11 @@ export default function Dashboard() {
             <span className="text-xs font-medium">הידרציה</span>
           </button>
           <button
-            onClick={() => navigate('/calculator/scale')}
+            onClick={() => navigate('/tools')}
             className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
           >
             <Scale className="h-5 w-5 text-honey" />
-            <span className="text-xs font-medium">כמות</span>
+            <span className="text-xs font-medium">כלים</span>
           </button>
           <button
             onClick={() => navigate('/calculator/temperature')}
