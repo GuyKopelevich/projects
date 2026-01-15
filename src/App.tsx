@@ -16,6 +16,7 @@ import Calculator from "./pages/Calculator";
 import FlourGuide from "./pages/FlourGuide";
 import BreadGuide from "./pages/BreadGuide";
 import Troubleshooting from "./pages/Troubleshooting";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/flours" element={<AppLayout><FlourGuide /></AppLayout>} />
           <Route path="/bread-guide" element={<AppLayout><BreadGuide /></AppLayout>} />
           <Route path="/troubleshooting" element={<AppLayout><Troubleshooting /></AppLayout>} />
+          <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
