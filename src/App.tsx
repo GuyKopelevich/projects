@@ -17,6 +17,7 @@ import FlourGuide from "./pages/FlourGuide";
 import BreadGuide from "./pages/BreadGuide";
 import Troubleshooting from "./pages/Troubleshooting";
 import Settings from "./pages/Settings";
+import Tools from "./pages/Tools";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/bread-guide" element={<AppLayout><BreadGuide /></AppLayout>} />
           <Route path="/troubleshooting" element={<AppLayout><Troubleshooting /></AppLayout>} />
           <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
+          <Route path="/tools" element={<AppLayout><Tools /></AppLayout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
