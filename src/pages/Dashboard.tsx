@@ -112,7 +112,8 @@ export default function Dashboard() {
       {/* Primary CTA */}
       <Button
         onClick={() => navigate('/recipes/new')}
-        className="w-full h-14 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
+        className="w-full h-14 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group animate-fade-in"
+        style={{ animationDelay: '100ms', animationFillMode: 'both' }}
       >
         <Plus className="h-5 w-5 ml-2 group-hover:rotate-90 transition-transform duration-300" />
         בנה מתכון חדש
@@ -123,7 +124,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => navigate('/bake/new')}
-          className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border border-orange-200 dark:border-orange-800 hover:shadow-lg transition-all duration-300 group text-right"
+          className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border border-orange-200 dark:border-orange-800 hover:shadow-lg transition-all duration-300 group text-right animate-fade-in"
+          style={{ animationDelay: '150ms', animationFillMode: 'both' }}
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
@@ -137,7 +139,8 @@ export default function Dashboard() {
 
         <button
           onClick={() => navigate('/recipes')}
-          className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 hover:shadow-lg transition-all duration-300 group text-right"
+          className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 hover:shadow-lg transition-all duration-300 group text-right animate-fade-in"
+          style={{ animationDelay: '200ms', animationFillMode: 'both' }}
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
@@ -153,7 +156,8 @@ export default function Dashboard() {
       {/* Starter Status Card */}
       <div 
         onClick={() => navigate('/starter')}
-        className="relative overflow-hidden p-4 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer group"
+        className="relative overflow-hidden p-4 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer group animate-fade-in"
+        style={{ animationDelay: '250ms', animationFillMode: 'both' }}
       >
         <div className="flex items-center gap-4">
           <div className={cn(
@@ -199,7 +203,10 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Tools Grid */}
-      <div className="space-y-3">
+      <div 
+        className="space-y-3 animate-fade-in"
+        style={{ animationDelay: '300ms', animationFillMode: 'both' }}
+      >
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">כלים מהירים</h2>
           <button 
@@ -216,11 +223,12 @@ export default function Dashboard() {
             { icon: BookOpen, label: 'מדריכים', path: '/guides', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
             { icon: Droplets, label: 'הידרציה', path: '/calculator/hydration', color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
             { icon: AlertCircle, label: 'בעיות', path: '/troubleshooting', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-100 dark:bg-rose-900/30' },
-          ].map((item) => (
+          ].map((item, index) => (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all duration-200"
+              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all duration-200 animate-fade-in"
+              style={{ animationDelay: `${350 + index * 50}ms`, animationFillMode: 'both' }}
             >
               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", item.bg)}>
                 <item.icon className={cn("h-5 w-5", item.color)} />
@@ -234,7 +242,8 @@ export default function Dashboard() {
       {/* Flour Guide Preview */}
       <div 
         onClick={() => navigate('/flours')}
-        className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800 hover:shadow-lg transition-all duration-300 cursor-pointer group"
+        className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800 hover:shadow-lg transition-all duration-300 cursor-pointer group animate-fade-in"
+        style={{ animationDelay: '550ms', animationFillMode: 'both' }}
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -261,7 +270,10 @@ export default function Dashboard() {
       </div>
 
       {/* Daily Tip */}
-      <div className="relative overflow-hidden p-4 rounded-xl bg-card border border-border">
+      <div 
+        className="relative overflow-hidden p-4 rounded-xl bg-card border border-border animate-fade-in"
+        style={{ animationDelay: '600ms', animationFillMode: 'both' }}
+      >
         <div className="flex items-start gap-3">
           <div className="text-2xl">{dailyTip.icon}</div>
           <div className="flex-1">
