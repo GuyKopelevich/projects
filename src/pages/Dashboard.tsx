@@ -10,7 +10,6 @@ import {
   Droplets,
   Scale,
   BookOpen,
-  Thermometer,
   AlertCircle
 } from 'lucide-react';
 import { stybelFlours, getRecommendedFloursForSourdough } from '@/data/stybel-flours';
@@ -120,37 +119,30 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Quick Calculators */}
+      {/* Quick Actions Grid */}
       <div className="space-y-3">
         <h2 className="section-title">מחשבונים וכלים</h2>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-4 gap-3">
+          <button
+            onClick={() => navigate('/tools')}
+            className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
+          >
+            <Scale className="h-5 w-5 text-primary" />
+            <span className="text-xs font-medium">כלים</span>
+          </button>
+          <button
+            onClick={() => navigate('/guides')}
+            className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
+          >
+            <BookOpen className="h-5 w-5 text-starter" />
+            <span className="text-xs font-medium">מדריכים</span>
+          </button>
           <button
             onClick={() => navigate('/calculator/hydration')}
             className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
           >
             <Droplets className="h-5 w-5 text-timer" />
             <span className="text-xs font-medium">הידרציה</span>
-          </button>
-          <button
-            onClick={() => navigate('/tools')}
-            className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
-          >
-            <Scale className="h-5 w-5 text-honey" />
-            <span className="text-xs font-medium">כלים</span>
-          </button>
-          <button
-            onClick={() => navigate('/calculator/temperature')}
-            className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
-          >
-            <Thermometer className="h-5 w-5 text-crust" />
-            <span className="text-xs font-medium">טמפ׳</span>
-          </button>
-          <button
-            onClick={() => navigate('/bread-guide')}
-            className="bread-card-flat flex flex-col items-center gap-2 py-4 hover:shadow-card transition-shadow"
-          >
-            <BookOpen className="h-5 w-5 text-starter" />
-            <span className="text-xs font-medium">מדריך</span>
           </button>
           <button
             onClick={() => navigate('/troubleshooting')}

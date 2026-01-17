@@ -14,7 +14,8 @@ import NewBake from "./pages/NewBake";
 import ActiveBake from "./pages/ActiveBake";
 import Calculator from "./pages/Calculator";
 import FlourGuide from "./pages/FlourGuide";
-import BreadGuide from "./pages/BreadGuide";
+import KnowledgeHub from "./pages/KnowledgeHub";
+import GuideDetail from "./pages/GuideDetail";
 import Troubleshooting from "./pages/Troubleshooting";
 import Settings from "./pages/Settings";
 import Tools from "./pages/Tools";
@@ -38,7 +39,8 @@ const App = () => (
           <Route path="/bake/:id" element={<AppLayout><ActiveBake /></AppLayout>} />
           <Route path="/calculator/:type" element={<AppLayout><Calculator /></AppLayout>} />
           <Route path="/flours" element={<AppLayout><FlourGuide /></AppLayout>} />
-          <Route path="/bread-guide" element={<AppLayout><BreadGuide /></AppLayout>} />
+          <Route path="/guides" element={<AppLayout><KnowledgeHub /></AppLayout>} />
+          <Route path="/guides/:type" element={<AppLayout><GuideDetail /></AppLayout>} />
           <Route path="/troubleshooting" element={<AppLayout><Troubleshooting /></AppLayout>} />
           <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
           <Route path="/tools" element={<AppLayout><Tools /></AppLayout>} />
