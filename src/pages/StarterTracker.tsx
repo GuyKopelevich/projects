@@ -8,7 +8,10 @@ import {
   Plus, 
   Wheat, 
   TrendingUp,
-  Clock
+  Clock,
+  Trash2,
+  Edit2,
+  MoreVertical
 } from 'lucide-react';
 import {
   Dialog,
@@ -16,7 +19,24 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   LineChart,
   Line,
@@ -44,6 +64,9 @@ interface StarterFeed {
 export default function StarterTracker() {
   const [feeds, setFeeds] = useState<StarterFeed[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingFeed, setEditingFeed] = useState<StarterFeed | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [feedToDelete, setFeedToDelete] = useState<string | null>(null);
 
   // Form state
   const [flour, setFlour] = useState(50);
@@ -72,26 +95,77 @@ export default function StarterTracker() {
     }));
 
   const handleSave = () => {
-    const newFeed: StarterFeed = {
-      id: Date.now().toString(),
-      fed_at: new Date().toISOString(),
-      flour_g: flour,
-      water_g: water,
-      ratio,
-      temp_c: temp,
-      height_before_cm: heightBefore ? parseFloat(heightBefore) : undefined,
-      height_peak_cm: heightPeak ? parseFloat(heightPeak) : undefined,
-      peak_after_hours: peakHours ? parseFloat(peakHours) : undefined,
-      notes: notes.trim() || undefined,
-    };
+    if (editingFeed) {
+      // Update existing feed
+      const updatedFeeds = feeds.map(f => 
+        f.id === editingFeed.id 
+          ? {
+              ...f,
+              flour_g: flour,
+              water_g: water,
+              ratio,
+              temp_c: temp,
+              height_before_cm: heightBefore ? parseFloat(heightBefore) : undefined,
+              height_peak_cm: heightPeak ? parseFloat(heightPeak) : undefined,
+              peak_after_hours: peakHours ? parseFloat(peakHours) : undefined,
+              notes: notes.trim() || undefined,
+            }
+          : f
+      );
+      setFeeds(updatedFeeds);
+      localStorage.setItem('starterFeeds', JSON.stringify(updatedFeeds));
+      toast.success('ההזנה עודכנה בהצלחה! ✓');
+    } else {
+      // Create new feed
+      const newFeed: StarterFeed = {
+        id: Date.now().toString(),
+        fed_at: new Date().toISOString(),
+        flour_g: flour,
+        water_g: water,
+        ratio,
+        temp_c: temp,
+        height_before_cm: heightBefore ? parseFloat(heightBefore) : undefined,
+        height_peak_cm: heightPeak ? parseFloat(heightPeak) : undefined,
+        peak_after_hours: peakHours ? parseFloat(peakHours) : undefined,
+        notes: notes.trim() || undefined,
+      };
 
-    const updatedFeeds = [newFeed, ...feeds];
+      const updatedFeeds = [newFeed, ...feeds];
+      setFeeds(updatedFeeds);
+      localStorage.setItem('starterFeeds', JSON.stringify(updatedFeeds));
+      toast.success('הזנה נרשמה בהצלחה! 🌱');
+    }
+    
+    setDialogOpen(false);
+    setEditingFeed(null);
+    resetForm();
+  };
+
+  const handleEdit = (feed: StarterFeed) => {
+    setEditingFeed(feed);
+    setFlour(feed.flour_g);
+    setWater(feed.water_g);
+    setRatio(feed.ratio);
+    setTemp(feed.temp_c);
+    setHeightBefore(feed.height_before_cm?.toString() || '');
+    setHeightPeak(feed.height_peak_cm?.toString() || '');
+    setPeakHours(feed.peak_after_hours?.toString() || '');
+    setNotes(feed.notes || '');
+    setDialogOpen(true);
+  };
+
+  const handleDelete = (feedId: string) => {
+    const updatedFeeds = feeds.filter(f => f.id !== feedId);
     setFeeds(updatedFeeds);
     localStorage.setItem('starterFeeds', JSON.stringify(updatedFeeds));
+    toast.success('ההזנה נמחקה');
+    setDeleteDialogOpen(false);
+    setFeedToDelete(null);
+  };
 
-    toast.success('הזנה נרשמה בהצלחה! 🌱');
-    setDialogOpen(false);
-    resetForm();
+  const openDeleteDialog = (feedId: string) => {
+    setFeedToDelete(feedId);
+    setDeleteDialogOpen(true);
   };
 
   const resetForm = () => {
@@ -103,6 +177,7 @@ export default function StarterTracker() {
     setHeightPeak('');
     setPeakHours('');
     setNotes('');
+    setEditingFeed(null);
   };
 
   const getTimeSinceFeed = (fedAt: string) => {
@@ -117,7 +192,12 @@ export default function StarterTracker() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="page-header mb-0">מעקב מחמצת</h1>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            resetForm();
+          }
+        }}>
           <DialogTrigger asChild>
             <Button className="gradient-starter bg-starter text-white hover:opacity-90">
               <Plus className="h-4 w-4 ml-1" />
@@ -126,7 +206,10 @@ export default function StarterTracker() {
           </DialogTrigger>
           <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle>רישום הזנה</DialogTitle>
+              <DialogTitle>{editingFeed ? 'עריכת הזנה' : 'רישום הזנה'}</DialogTitle>
+              <DialogDescription>
+                {editingFeed ? 'ערוך את פרטי ההזנה' : 'הוסף הזנה חדשה למחמצת'}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-3">
@@ -280,14 +363,36 @@ export default function StarterTracker() {
                     </div>
                   </div>
                 </div>
-                <div className="text-left text-sm text-muted-foreground">
-                  <div>{getTimeSinceFeed(feed.fed_at)}</div>
-                  {feed.peak_after_hours && (
-                    <div className="flex items-center gap-1 text-starter">
-                      <Clock className="h-3 w-3" />
-                      {feed.peak_after_hours}h
-                    </div>
-                  )}
+                <div className="flex items-start gap-2">
+                  <div className="text-left text-sm text-muted-foreground">
+                    <div>{getTimeSinceFeed(feed.fed_at)}</div>
+                    {feed.peak_after_hours && (
+                      <div className="flex items-center gap-1 text-starter">
+                        <Clock className="h-3 w-3" />
+                        {feed.peak_after_hours}h
+                      </div>
+                    )}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-popover">
+                      <DropdownMenuItem onClick={() => handleEdit(feed)}>
+                        <Edit2 className="h-4 w-4 ml-2" />
+                        עריכה
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => openDeleteDialog(feed.id)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 ml-2" />
+                        מחיקה
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
               {feed.notes && (
@@ -304,6 +409,27 @@ export default function StarterTracker() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>האם למחוק את ההזנה?</AlertDialogTitle>
+            <AlertDialogDescription>
+              פעולה זו לא ניתנת לביטול. ההזנה תימחק לצמיתות.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => feedToDelete && handleDelete(feedToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              מחק
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

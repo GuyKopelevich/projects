@@ -86,8 +86,7 @@ export default function Recipes() {
           {recipes.map((recipe) => (
             <div
               key={recipe.id}
-              className="bread-card cursor-pointer"
-              onClick={() => navigate(`/recipes/${recipe.id}`)}
+              className="bread-card"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -106,7 +105,6 @@ export default function Recipes() {
                     </span>
                   </div>
                 </div>
-                <ChevronLeft className="h-5 w-5 text-muted-foreground" />
               </div>
             </div>
           ))}
