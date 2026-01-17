@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { 
   stybelFlours, 
@@ -159,6 +160,9 @@ export default function FlourGuide() {
                   <Wheat className="h-5 w-5 text-wheat" />
                   {selectedFlour.hebrewName}
                 </DialogTitle>
+                <DialogDescription>
+                  {categoryLabels[selectedFlour.category]} • קוד {selectedFlour.code}
+                </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-6">

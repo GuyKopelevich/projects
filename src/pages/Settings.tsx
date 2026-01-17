@@ -57,15 +57,17 @@ export default function Settings() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {settings.darkMode ? (
-                <Moon className="h-5 w-5 text-primary" />
-              ) : (
-                <Sun className="h-5 w-5 text-amber-500" />
-              )}
-              <div>
-                <Label htmlFor="dark-mode" className="text-base font-medium">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                {settings.darkMode ? (
+                  <Moon className="h-5 w-5 text-primary" />
+                ) : (
+                  <Sun className="h-5 w-5 text-amber-500" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <Label htmlFor="dark-mode" className="text-base font-medium block">
                   מצב כהה
                 </Label>
                 <p className="text-sm text-muted-foreground">
@@ -77,6 +79,7 @@ export default function Settings() {
               id="dark-mode"
               checked={settings.darkMode}
               onCheckedChange={(checked) => updateSetting('darkMode', checked)}
+              className="flex-shrink-0"
             />
           </div>
         </CardContent>

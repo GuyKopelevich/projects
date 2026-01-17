@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,10 @@ import {
   Play, 
   Thermometer,
   Clock,
-  Wheat
+  Wheat,
+  Flame,
+  BookOpen,
+  Info
 } from 'lucide-react';
 import {
   Select,
@@ -19,6 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { bakingVessels } from '@/data/bread-extras';
 
 interface Recipe {
   id: string;
@@ -41,6 +51,13 @@ export default function NewBake() {
   const [foldsCount, setFoldsCount] = useState(4);
   const [bulkHours, setBulkHours] = useState(4);
   const [coldRetardHours, setColdRetardHours] = useState(12);
+  
+  // New baking settings
+  const [selectedVessel, setSelectedVessel] = useState<string>('dutch_oven');
+  const [ovenTempCovered, setOvenTempCovered] = useState(230);
+  const [ovenTempUncovered, setOvenTempUncovered] = useState(220);
+  const [bakeCoveredMinutes, setBakeCoveredMinutes] = useState(25);
+  const [bakeUncoveredMinutes, setBakeUncoveredMinutes] = useState(20);
 
   useEffect(() => {
     const stored = localStorage.getItem('recipes');
@@ -48,8 +65,17 @@ export default function NewBake() {
     setRecipes([...SAMPLE_RECIPES, ...userRecipes]);
   }, []);
 
+  // Update temps based on vessel selection
+  useEffect(() => {
+    const vessel = bakingVessels.find(v => v.id === selectedVessel);
+    if (vessel) {
+      setOvenTempCovered(vessel.tempRange.min);
+      setOvenTempUncovered(vessel.tempRange.min - 10);
+    }
+  }, [selectedVessel]);
+
   const generateSchedule = () => {
-    const steps: Array<{ id: string; type: string; title: string; duration: number; sort: number; completed: boolean }> = [];
+    const steps: Array<{ id: string; type: string; title: string; duration: number; sort: number; completed: boolean; notes?: string }> = [];
     let sortOrder = 0;
 
     // Autolyse
@@ -98,9 +124,28 @@ export default function NewBake() {
       steps.push({ id: `step-${sortOrder}`, type: 'proof', title: 'התפחה שנייה', duration: 60, sort: sortOrder++, completed: false });
     }
 
+    // Get vessel name
+    const vesselName = bakingVessels.find(v => v.id === selectedVessel)?.name || 'סיר יצוק';
+
     // Bake
-    steps.push({ id: `step-${sortOrder}`, type: 'bake_covered', title: 'אפייה עם מכסה', duration: 25, sort: sortOrder++, completed: false });
-    steps.push({ id: `step-${sortOrder}`, type: 'bake_uncovered', title: 'אפייה ללא מכסה', duration: 20, sort: sortOrder++, completed: false });
+    steps.push({ 
+      id: `step-${sortOrder}`, 
+      type: 'bake_covered', 
+      title: `אפייה עם מכסה (${ovenTempCovered}°C)`, 
+      duration: bakeCoveredMinutes, 
+      sort: sortOrder++, 
+      completed: false,
+      notes: `${vesselName} - עם מכסה`
+    });
+    steps.push({ 
+      id: `step-${sortOrder}`, 
+      type: 'bake_uncovered', 
+      title: `אפייה ללא מכסה (${ovenTempUncovered}°C)`, 
+      duration: bakeUncoveredMinutes, 
+      sort: sortOrder++, 
+      completed: false,
+      notes: `${vesselName} - ללא מכסה`
+    });
 
     // Cool
     steps.push({ id: `step-${sortOrder}`, type: 'cool', title: 'קירור לפני חיתוך', duration: 60, sort: sortOrder++, completed: false });
@@ -116,6 +161,7 @@ export default function NewBake() {
 
     const bakeId = Date.now().toString();
     const selectedRecipeName = recipes.find(r => r.id === selectedRecipe)?.name;
+    const vesselName = bakingVessels.find(v => v.id === selectedVessel)?.name;
     
     const newBake = {
       id: bakeId,
@@ -127,6 +173,10 @@ export default function NewBake() {
       folds_count: foldsCount,
       bulk_target_hours: bulkHours,
       cold_retard_hours: coldRetardHours,
+      oven_temp_c: ovenTempCovered,
+      covered_minutes: bakeCoveredMinutes,
+      uncovered_minutes: bakeUncoveredMinutes,
+      vessel: vesselName,
       status: 'in_progress',
       created_at: new Date().toISOString(),
     };
@@ -279,6 +329,109 @@ export default function NewBake() {
           />
         </div>
       </div>
+
+      {/* Baking Settings */}
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="baking">
+          <AccordionTrigger className="text-lg font-semibold">
+            <div className="flex items-center gap-2">
+              <Flame className="h-4 w-4 text-crust" />
+              הגדרות אפייה
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-4">
+            {/* Vessel Selection */}
+            <div>
+              <Label className="input-label">כלי אפייה</Label>
+              <Select value={selectedVessel} onValueChange={setSelectedVessel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר כלי אפייה..." />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {bakingVessels.map((vessel) => (
+                    <SelectItem key={vessel.id} value={vessel.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{vessel.icon}</span>
+                        <span>{vessel.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {bakingVessels.find(v => v.id === selectedVessel)?.steamMethod}
+              </p>
+            </div>
+
+            {/* Covered Baking */}
+            <div className="bread-card-flat">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="font-medium">אפייה עם מכסה</Label>
+                <span className="text-lg font-semibold font-rubik">{bakeCoveredMinutes} דקות</span>
+              </div>
+              <Slider
+                value={[bakeCoveredMinutes]}
+                onValueChange={([v]) => setBakeCoveredMinutes(v)}
+                min={15}
+                max={40}
+                step={5}
+              />
+              <div className="flex items-center justify-between mt-3">
+                <Label className="text-sm text-muted-foreground">טמפרטורה</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={ovenTempCovered}
+                    onChange={(e) => setOvenTempCovered(Number(e.target.value))}
+                    className="w-20 h-8 text-center"
+                  />
+                  <span className="text-sm">°C</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Uncovered Baking */}
+            <div className="bread-card-flat">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="font-medium">אפייה ללא מכסה</Label>
+                <span className="text-lg font-semibold font-rubik">{bakeUncoveredMinutes} דקות</span>
+              </div>
+              <Slider
+                value={[bakeUncoveredMinutes]}
+                onValueChange={([v]) => setBakeUncoveredMinutes(v)}
+                min={10}
+                max={35}
+                step={5}
+              />
+              <div className="flex items-center justify-between mt-3">
+                <Label className="text-sm text-muted-foreground">טמפרטורה</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={ovenTempUncovered}
+                    onChange={(e) => setOvenTempUncovered(Number(e.target.value))}
+                    className="w-20 h-8 text-center"
+                  />
+                  <span className="text-sm">°C</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bread Guide Link */}
+            <Link 
+              to="/bread-guide" 
+              className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+            >
+              <BookOpen className="h-5 w-5 text-primary" />
+              <div className="flex-1">
+                <div className="font-medium">מדריך לחם</div>
+                <div className="text-sm text-muted-foreground">עיצוב, חיתוך, תוספות וכלי אפייה</div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground rotate-180" />
+            </Link>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Start Button */}
       <Button
