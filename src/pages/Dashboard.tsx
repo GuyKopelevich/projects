@@ -9,7 +9,8 @@ import {
   AlertCircle,
   Clock,
   Thermometer,
-  ChefHat
+  ChefHat,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IconBadge } from '@/components/ui/IconBadge';
@@ -96,50 +97,58 @@ export default function Dashboard() {
     const lastFeed = starterFeeds[0];
     const hours = Math.floor((Date.now() - new Date(lastFeed.fed_at).getTime()) / (1000 * 60 * 60));
     if (hours < 12) return { status: 'fresh', label: 'טרייה', color: 'text-success', emoji: '🌱' };
-    if (hours < 24) return { status: 'ready', label: 'מוכנה', color: 'text-amber-600', emoji: '✨' };
+    if (hours < 24) return { status: 'ready', label: 'מוכנה', color: 'text-primary', emoji: '✨' };
     return { status: 'hungry', label: 'רעבה', color: 'text-destructive', emoji: '🍽️' };
   };
 
   const starterStatus = getStarterStatus();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Hero Section */}
       <div 
-        className="relative pt-4 pb-2 text-center animate-fade-in"
+        className="relative pt-6 pb-4 text-center animate-fade-in"
         style={{ animationDelay: '0ms', animationFillMode: 'both' }}
       >
-        {/* Starter jar illustration */}
-        <div className="relative w-28 h-28 mx-auto mb-5">
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-b from-amber-200/60 to-orange-200/40 dark:from-amber-800/30 dark:to-orange-800/20 rounded-3xl blur-xl" />
+        {/* Glowing jar illustration */}
+        <div className="relative w-32 h-32 mx-auto mb-6">
+          {/* Outer glow */}
+          <div className="absolute inset-0 rounded-3xl animate-glow" />
           
           {/* Main jar */}
-          <div className="relative w-full h-full rounded-3xl bg-gradient-to-b from-amber-50 to-orange-50 dark:from-amber-900/40 dark:to-orange-900/30 border-2 border-amber-200/60 dark:border-amber-700/40 flex items-center justify-center overflow-hidden shadow-lg">
+          <div className="relative w-full h-full rounded-3xl flex items-center justify-center overflow-hidden"
+            style={{
+              background: 'linear-gradient(145deg, hsl(25 25% 18%) 0%, hsl(25 20% 12%) 100%)',
+              border: '2px solid hsl(42 60% 45% / 0.3)',
+              boxShadow: '0 0 40px hsl(42 85% 55% / 0.2), inset 0 2px 0 hsl(45 50% 60% / 0.1)'
+            }}
+          >
             {/* Jar lid */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-4 bg-amber-700 dark:bg-amber-600 rounded-t-lg" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 rounded-t-lg"
+              style={{ background: 'linear-gradient(180deg, hsl(42 70% 45%) 0%, hsl(38 65% 35%) 100%)' }}
+            />
             
             {/* Bubbles */}
-            <div className="absolute top-6 left-4 w-2 h-2 bg-amber-300/60 rounded-full animate-bounce-subtle" />
-            <div className="absolute top-8 right-5 w-1.5 h-1.5 bg-amber-200/50 rounded-full animate-bounce-subtle" style={{ animationDelay: '0.3s' }} />
-            <div className="absolute top-10 left-6 w-1 h-1 bg-amber-300/40 rounded-full animate-bounce-subtle" style={{ animationDelay: '0.6s' }} />
+            <div className="absolute top-8 left-5 w-2.5 h-2.5 bg-primary/40 rounded-full animate-bounce-subtle" />
+            <div className="absolute top-10 right-6 w-2 h-2 bg-primary/30 rounded-full animate-bounce-subtle" style={{ animationDelay: '0.4s' }} />
+            <div className="absolute top-12 left-7 w-1.5 h-1.5 bg-primary/25 rounded-full animate-bounce-subtle" style={{ animationDelay: '0.8s' }} />
             
-            <Wheat className="w-10 h-10 text-amber-600 dark:text-amber-400 mt-2" />
+            <Wheat className="w-12 h-12 text-primary mt-3" />
           </div>
           
-          {/* Leaves decoration */}
-          <div className="absolute -bottom-1 -left-2 text-2xl transform -rotate-12">🌿</div>
-          <div className="absolute -bottom-1 -right-2 text-2xl transform rotate-12 scale-x-[-1]">🌿</div>
+          {/* Sparkles */}
+          <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse-slow" />
+          <Sparkles className="absolute -bottom-1 -left-3 w-5 h-5 text-primary/60 animate-pulse-slow" style={{ animationDelay: '1s' }} />
         </div>
         
-        <p className="text-sm text-muted-foreground mb-1">{greeting} 👋</p>
-        <h1 className="text-3xl font-bold font-rubik text-primary mb-2">מחמצת שלי</h1>
+        <p className="text-sm text-muted-foreground mb-2">{greeting} 👋</p>
+        <h1 className="text-3xl font-bold font-rubik text-gold mb-2">מחמצת שלי</h1>
         <p className="text-base text-muted-foreground">הדרך הפשוטה לבצק המושלם.</p>
       </div>
 
       {/* Feature Icons Row */}
       <div 
-        className="flex justify-center gap-8 py-2 animate-fade-in"
+        className="flex justify-center gap-10 py-3 animate-fade-in"
         style={{ animationDelay: '100ms', animationFillMode: 'both' }}
       >
         {[
@@ -150,10 +159,10 @@ export default function Dashboard() {
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
-            className="flex flex-col items-center gap-2 group"
+            className="flex flex-col items-center gap-3 group"
           >
-            <IconBadge icon={item.icon} size="md" variant="circle" />
-            <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{item.label}</span>
+            <IconBadge icon={item.icon} size="md" variant="circle" glow />
+            <span className="text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors">{item.label}</span>
           </button>
         ))}
       </div>
@@ -173,16 +182,21 @@ export default function Dashboard() {
         variant="flat"
         onClick={() => navigate('/starter')}
         className="animate-fade-in group"
-        style={{ animationDelay: '200ms', animationFillMode: 'both' } as React.CSSProperties}
+        style={{ animationDelay: '200ms', animationFillMode: 'both' }}
       >
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-b from-amber-100 to-amber-50 dark:from-amber-900/40 dark:to-amber-800/30 border border-amber-200/60 dark:border-amber-700/40 flex items-center justify-center text-2xl flex-shrink-0">
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl flex-shrink-0"
+            style={{
+              background: 'linear-gradient(145deg, hsl(25 25% 18%) 0%, hsl(25 20% 14%) 100%)',
+              border: '1px solid hsl(42 60% 45% / 0.2)'
+            }}
+          >
             {starterStatus.emoji}
           </div>
           
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-primary">המחמצת שלי</h3>
+              <h3 className="font-semibold text-foreground">המחמצת שלי</h3>
               <span className={cn("text-xs font-medium", starterStatus.color)}>
                 ({starterStatus.label})
               </span>
@@ -199,13 +213,13 @@ export default function Dashboard() {
             </p>
           </div>
           
-          <ChevronLeft className="h-5 w-5 text-muted-foreground group-hover:text-accent group-hover:-translate-x-1 transition-all flex-shrink-0" />
+          <ChevronLeft className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:-translate-x-1 transition-all flex-shrink-0" />
         </div>
       </SectionCard>
 
       {/* Hot Topics Section */}
       <div 
-        className="space-y-3 animate-fade-in"
+        className="space-y-4 animate-fade-in"
         style={{ animationDelay: '250ms', animationFillMode: 'both' }}
       >
         <h2 className="section-title text-center">נושאים חמים</h2>
@@ -217,12 +231,12 @@ export default function Dashboard() {
               variant="flat"
               onClick={() => navigate(topic.path)}
               className="animate-fade-in group"
-              style={{ animationDelay: `${300 + index * 50}ms`, animationFillMode: 'both' } as React.CSSProperties}
+              style={{ animationDelay: `${300 + index * 60}ms`, animationFillMode: 'both' }}
             >
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-primary">{topic.title}</h3>
-                  <p className="text-xs text-accent font-medium mt-0.5">{topic.subtitle}</p>
+                  <h3 className="font-semibold text-foreground">{topic.title}</h3>
+                  <p className="text-xs text-primary font-medium mt-0.5">{topic.subtitle}</p>
                   <p className="text-xs text-muted-foreground mt-1">{topic.description}</p>
                 </div>
                 
@@ -237,11 +251,16 @@ export default function Dashboard() {
       <SectionCard 
         variant="compact"
         className="animate-fade-in"
-        style={{ animationDelay: '450ms', animationFillMode: 'both' } as React.CSSProperties}
+        style={{ animationDelay: '500ms', animationFillMode: 'both' }}
       >
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-            <ChefHat className="h-5 w-5 text-accent" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{
+              background: 'hsl(42 85% 55% / 0.15)',
+              boxShadow: '0 0 15px hsl(42 85% 55% / 0.1)'
+            }}
+          >
+            <ChefHat className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h3 className="font-semibold text-primary text-sm mb-1">טיפ היום</h3>
@@ -252,8 +271,8 @@ export default function Dashboard() {
 
       {/* FAQ Section */}
       <div 
-        className="space-y-3 animate-fade-in"
-        style={{ animationDelay: '500ms', animationFillMode: 'both' }}
+        className="space-y-4 animate-fade-in"
+        style={{ animationDelay: '550ms', animationFillMode: 'both' }}
       >
         <h2 className="section-title text-center">שאלות נפוצות</h2>
         
@@ -263,10 +282,10 @@ export default function Dashboard() {
               key={index}
               onClick={() => navigate(item.path)}
               className="faq-item w-full animate-fade-in"
-              style={{ animationDelay: `${550 + index * 30}ms`, animationFillMode: 'both' }}
+              style={{ animationDelay: `${600 + index * 40}ms`, animationFillMode: 'both' }}
             >
               <ChevronLeft className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-              <span className="text-sm font-medium text-primary">{item.question}</span>
+              <span className="text-sm font-medium text-foreground">{item.question}</span>
             </button>
           ))}
         </div>
@@ -274,20 +293,20 @@ export default function Dashboard() {
 
       {/* Quick Tools Row */}
       <div 
-        className="space-y-3 animate-fade-in"
-        style={{ animationDelay: '650ms', animationFillMode: 'both' }}
+        className="space-y-4 animate-fade-in"
+        style={{ animationDelay: '700ms', animationFillMode: 'both' }}
       >
         <div className="flex items-center justify-between">
           <button 
             onClick={() => navigate('/tools')}
-            className="text-xs text-accent hover:underline font-medium"
+            className="text-xs text-primary hover:underline font-medium"
           >
             הכל ←
           </button>
           <h2 className="section-title mb-0">כלים מהירים</h2>
         </div>
         
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-3">
           {[
             { icon: Thermometer, label: 'מחשבון', path: '/calculator' },
             { icon: BookOpen, label: 'מדריכים', path: '/guides' },
@@ -297,7 +316,7 @@ export default function Dashboard() {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className="flex flex-col items-center gap-2 p-3 rounded-2xl section-card-flat hover:shadow-md transition-all"
+              className="flex flex-col items-center gap-2 p-3 rounded-xl section-card-flat hover:shadow-glow transition-all"
             >
               <IconBadge icon={item.icon} size="sm" variant="circle" />
               <span className="text-[11px] font-medium text-muted-foreground">{item.label}</span>
@@ -310,10 +329,10 @@ export default function Dashboard() {
       <button
         onClick={() => navigate('/recipes/new')}
         className="btn-dashed w-full flex items-center justify-center gap-3 animate-fade-in group"
-        style={{ animationDelay: '700ms', animationFillMode: 'both' }}
+        style={{ animationDelay: '750ms', animationFillMode: 'both' }}
       >
         <IconBadge icon={Plus} size="sm" variant="circle" className="group-hover:scale-105" />
-        <span className="font-semibold text-amber-700 dark:text-amber-400">בנה מתכון חדש</span>
+        <span className="font-semibold text-primary">בנה מתכון חדש</span>
       </button>
     </div>
   );
