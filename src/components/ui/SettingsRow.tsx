@@ -32,18 +32,18 @@ export function SettingsRow({
     <Component 
       className={cn(
         'settings-row w-full',
-        isClickable && 'cursor-pointer hover:bg-muted/50 -mx-4 px-4 rounded-lg transition-colors'
+        isClickable && 'cursor-pointer hover:bg-muted/30 -mx-4 px-4 rounded-xl transition-colors'
       )}
       onClick={onClick}
     >
       <div className="flex items-center gap-3 flex-1 min-w-0">
         {Icon && (
           <div className="settings-row-icon">
-            <Icon className="h-5 w-5 text-amber-700 dark:text-amber-400" />
+            <Icon className="h-5 w-5 text-primary" />
           </div>
         )}
         <div className="min-w-0 text-right flex-1">
-          <span className="text-base font-medium block">{label}</span>
+          <span className="text-base font-medium text-foreground block">{label}</span>
           {description && (
             <span className="text-sm text-muted-foreground block">{description}</span>
           )}

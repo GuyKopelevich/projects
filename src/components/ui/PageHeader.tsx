@@ -39,7 +39,7 @@ export function PageHeader({
             <ArrowRight className="h-5 w-5" />
           </button>
         )}
-        <h1 className="text-2xl font-bold font-rubik text-primary">{title}</h1>
+        <h1 className="page-title">{title}</h1>
       </div>
       {action && <div>{action}</div>}
     </div>

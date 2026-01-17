@@ -5,6 +5,7 @@ interface IconBadgeProps {
   icon: LucideIcon;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'circle';
+  glow?: boolean;
   className?: string;
 }
 
@@ -12,6 +13,7 @@ export function IconBadge({
   icon: Icon, 
   size = 'md', 
   variant = 'default',
+  glow = false,
   className 
 }: IconBadgeProps) {
   const sizeClasses = {
@@ -29,16 +31,14 @@ export function IconBadge({
   return (
     <div 
       className={cn(
-        'flex items-center justify-center flex-shrink-0',
-        'bg-gradient-to-b from-amber-100 to-amber-50 border border-amber-200/60',
-        'dark:from-amber-900/50 dark:to-amber-800/30 dark:border-amber-700/50',
-        'shadow-sm transition-transform group-hover:scale-105',
+        'icon-badge',
         sizeClasses[size],
         variant === 'circle' && 'rounded-full',
+        glow && 'icon-badge-glow',
         className
       )}
     >
-      <Icon className={cn('text-amber-700 dark:text-amber-400', iconSizes[size])} />
+      <Icon className={cn('text-primary', iconSizes[size])} />
     </div>
   );
 }
