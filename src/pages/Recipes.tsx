@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronLeft, BookOpen } from 'lucide-react';
+import RecipeImport from '@/components/RecipeImport';
 
 interface Recipe {
   id: string;
@@ -45,11 +46,19 @@ export default function Recipes() {
   const navigate = useNavigate();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
 
-  useEffect(() => {
+  const loadRecipes = () => {
     const stored = localStorage.getItem('recipes');
     const userRecipes = stored ? JSON.parse(stored) : [];
     setRecipes([...SAMPLE_RECIPES, ...userRecipes]);
+  };
+
+  useEffect(() => {
+    loadRecipes();
   }, []);
+
+  const handleImport = () => {
+    loadRecipes();
+  };
 
   const calculateHydration = (water: number, flour: number) => {
     return ((water / flour) * 100).toFixed(0);
@@ -59,14 +68,17 @@ export default function Recipes() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="page-header mb-0">המתכונים שלי</h1>
-        <Button
-          onClick={() => navigate('/recipes/new')}
-          size="sm"
-          className="gradient-golden text-accent-foreground"
-        >
-          <Plus className="h-4 w-4 ml-1" />
-          חדש
-        </Button>
+        <div className="flex items-center gap-2">
+          <RecipeImport onImport={handleImport} />
+          <Button
+            onClick={() => navigate('/recipes/new')}
+            size="sm"
+            className="gradient-golden text-accent-foreground"
+          >
+            <Plus className="h-4 w-4 ml-1" />
+            חדש
+          </Button>
+        </div>
       </div>
 
       {recipes.length > 0 ? (
