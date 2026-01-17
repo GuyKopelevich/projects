@@ -419,7 +419,7 @@ export default function NewBake() {
 
             {/* Bread Guide Link */}
             <Link 
-              to="/bread-guide" 
+              to="/guides"
               className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
             >
               <BookOpen className="h-5 w-5 text-primary" />
