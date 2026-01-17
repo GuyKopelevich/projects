@@ -14,8 +14,8 @@ export function BottomNavigation() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border shadow-elevated safe-area-bottom">
-      <div className="flex items-center justify-around px-2 py-1">
+    <nav className="bottom-nav">
+      <div className="flex items-center justify-around px-2 py-2 max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -29,8 +29,16 @@ export function BottomNavigation() {
                 isActive ? "nav-item-active" : "nav-item-inactive"
               )}
             >
-              <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />
-              <span className="text-xs font-medium">{item.label}</span>
+              <div className={cn(
+                "nav-item-icon",
+                isActive && "bg-accent/10"
+              )}>
+                <Icon className={cn(
+                  "h-5 w-5 transition-all",
+                  isActive && "scale-110"
+                )} />
+              </div>
+              <span className="text-[11px] font-medium">{item.label}</span>
             </NavLink>
           );
         })}
