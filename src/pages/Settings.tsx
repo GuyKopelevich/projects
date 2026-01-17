@@ -1,10 +1,11 @@
-import { ArrowRight, Moon, Sun, Clock, Palette } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Moon, Sun, Clock, Palette, Info } from "lucide-react";
 import { useEffect, useState } from "react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SectionCard } from "@/components/ui/SectionCard";
+import { SettingsRow } from "@/components/ui/SettingsRow";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type TimeFormat = '24h' | '12h';
 
@@ -40,106 +41,88 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-6" dir="rtl">
-      <div className="flex items-center gap-2">
-        <Link to="/" className="text-muted-foreground hover:text-foreground">
-          <ArrowRight className="h-5 w-5" />
-        </Link>
-        <h1 className="text-2xl font-bold">הגדרות</h1>
-      </div>
+    <div className="space-y-6">
+      <PageHeader title="הגדרות" showBack backPath="/" />
 
       {/* Appearance */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            מראה
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                {settings.darkMode ? (
-                  <Moon className="h-5 w-5 text-primary" />
-                ) : (
-                  <Sun className="h-5 w-5 text-amber-500" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <Label htmlFor="dark-mode" className="text-base font-medium block">
-                  מצב כהה
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {settings.darkMode ? 'מופעל' : 'כבוי'}
-                </p>
-              </div>
-            </div>
-            <Switch
-              id="dark-mode"
-              checked={settings.darkMode}
-              onCheckedChange={(checked) => updateSetting('darkMode', checked)}
-              className="flex-shrink-0"
-            />
+      <SectionCard className="animate-fade-in" style={{ animationDelay: '100ms', animationFillMode: 'both' } as React.CSSProperties}>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+            <Palette className="h-4 w-4 text-accent" />
           </div>
-        </CardContent>
-      </Card>
+          <h2 className="font-semibold text-primary">מראה</h2>
+        </div>
+        
+        <SettingsRow
+          icon={settings.darkMode ? Moon : Sun}
+          label="מצב כהה"
+          description={settings.darkMode ? 'מופעל' : 'כבוי'}
+          value={settings.darkMode}
+          onValueChange={(checked) => updateSetting('darkMode', checked)}
+        />
+      </SectionCard>
 
       {/* Time Format */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            פורמט שעה
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup
-            value={settings.timeFormat}
-            onValueChange={(value) => updateSetting('timeFormat', value as TimeFormat)}
-            className="space-y-3"
-          >
-            <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="24h" id="24h" />
-                <Label htmlFor="24h" className="flex-1 cursor-pointer">
-                  <div className="font-medium">24 שעות</div>
-                  <div className="text-sm text-muted-foreground">לדוגמה: 14:30</div>
-                </Label>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="12h" id="12h" />
-                <Label htmlFor="12h" className="flex-1 cursor-pointer">
-                  <div className="font-medium">12 שעות (AM/PM)</div>
-                  <div className="text-sm text-muted-foreground">לדוגמה: 2:30 PM</div>
-                </Label>
-              </div>
-            </div>
-          </RadioGroup>
-        </CardContent>
-      </Card>
+      <SectionCard className="animate-fade-in" style={{ animationDelay: '200ms', animationFillMode: 'both' } as React.CSSProperties}>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+            <Clock className="h-4 w-4 text-accent" />
+          </div>
+          <h2 className="font-semibold text-primary">פורמט שעה</h2>
+        </div>
+        
+        <RadioGroup
+          value={settings.timeFormat}
+          onValueChange={(value) => updateSetting('timeFormat', value as TimeFormat)}
+          className="space-y-2"
+        >
+          <div className={cn(
+            "choice-card",
+            settings.timeFormat === '24h' && "choice-card-selected"
+          )}>
+            <RadioGroupItem value="24h" id="24h" />
+            <Label htmlFor="24h" className="flex-1 cursor-pointer">
+              <div className="font-medium">24 שעות</div>
+              <div className="text-sm text-muted-foreground">לדוגמה: 14:30</div>
+            </Label>
+          </div>
+          
+          <div className={cn(
+            "choice-card",
+            settings.timeFormat === '12h' && "choice-card-selected"
+          )}>
+            <RadioGroupItem value="12h" id="12h" />
+            <Label htmlFor="12h" className="flex-1 cursor-pointer">
+              <div className="font-medium">12 שעות (AM/PM)</div>
+              <div className="text-sm text-muted-foreground">לדוגמה: 2:30 PM</div>
+            </Label>
+          </div>
+        </RadioGroup>
+      </SectionCard>
 
       {/* About */}
-      <Card className="bg-muted/30">
-        <CardHeader>
-          <CardTitle className="text-lg">אודות</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      <SectionCard variant="flat" className="animate-fade-in" style={{ animationDelay: '300ms', animationFillMode: 'both' } as React.CSSProperties}>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+            <Info className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <h2 className="font-semibold text-primary">אודות</h2>
+        </div>
+        
+        <div className="space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">גרסה</span>
-            <span>1.0.0</span>
+            <span className="font-medium">1.0.0</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">פיתוח</span>
-            <span>מחמצת—סיידקיק</span>
+            <span className="font-medium">מחמצת—סיידקיק</span>
           </div>
-          <p className="text-xs text-muted-foreground pt-2">
+          <p className="text-xs text-muted-foreground pt-2 border-t border-border">
             אפליקציה לניהול אפיית לחם מחמצת, כולל מתכונים, מעקב מחמצת, ומחשבונים שימושיים.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
     </div>
   );
 }

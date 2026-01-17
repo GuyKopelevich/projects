@@ -7,10 +7,20 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <main className="container max-w-lg mx-auto px-4 py-6">
+    <div className="app-shell">
+      {/* Cream spot decorations */}
+      <div className="cream-spots">
+        <div className="cream-spot cream-spot-1" />
+        <div className="cream-spot cream-spot-2" />
+        <div className="cream-spot cream-spot-3" />
+        <div className="cream-spot cream-spot-4" />
+      </div>
+
+      {/* Main content */}
+      <main className="content-container py-6 pb-24 min-h-screen relative">
         {children}
       </main>
+
       <BottomNavigation />
     </div>
   );
