@@ -1,10 +1,8 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, FileText, Clipboard, Check, AlertCircle } from 'lucide-react';
+import { Upload, Sparkles, Check, AlertCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Recipe {
@@ -20,6 +18,17 @@ interface Recipe {
   created_at: string;
 }
 
+interface ParsedRecipe {
+  name: string;
+  flour_total_g: number;
+  water_g: number;
+  starter_g: number;
+  salt_g: number;
+  flour_breakdown: Record<string, number>;
+  notes: string;
+  extras: Record<string, number>;
+}
+
 interface RecipeImportProps {
   onImport: (recipes: Recipe[]) => void;
 }
@@ -28,134 +37,220 @@ export default function RecipeImport({ onImport }: RecipeImportProps) {
   const [open, setOpen] = useState(false);
   const [textInput, setTextInput] = useState('');
   const [importing, setImporting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [parsedPreview, setParsedPreview] = useState<ParsedRecipe | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
 
-  const validateRecipe = (recipe: any): recipe is Omit<Recipe, 'id' | 'created_at'> => {
-    return (
-      typeof recipe === 'object' &&
-      recipe !== null &&
-      typeof recipe.name === 'string' &&
-      recipe.name.trim().length > 0 &&
-      typeof recipe.flour_total_g === 'number' &&
-      recipe.flour_total_g > 0 &&
-      typeof recipe.water_g === 'number' &&
-      recipe.water_g > 0 &&
-      typeof recipe.starter_g === 'number' &&
-      recipe.starter_g >= 0 &&
-      typeof recipe.salt_g === 'number' &&
-      recipe.salt_g >= 0
-    );
-  };
-
-  const processRecipes = (data: any): Recipe[] => {
-    const recipes: Recipe[] = [];
-    const items = Array.isArray(data) ? data : [data];
-
-    for (const item of items) {
-      if (validateRecipe(item)) {
-        recipes.push({
-          ...item,
-          id: `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          created_at: new Date().toISOString(),
-          is_sample: false,
-        });
-      }
-    }
-
-    return recipes;
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setImporting(true);
+  // Parse Hebrew text to extract recipe data
+  const parseRecipeText = (text: string): ParsedRecipe | null => {
     try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      const recipes = processRecipes(data);
+      const lines = text.trim().split('\n').filter(l => l.trim());
+      if (lines.length === 0) return null;
 
-      if (recipes.length === 0) {
-        toast.error('לא נמצאו מתכונים תקינים בקובץ');
-        return;
+      // Extract recipe name (usually first line, might have emoji)
+      let name = lines[0].replace(/^[🥖🥯🍮🍫🍅🍞🥐🥪🧁🎂🍰]+\s*/, '').trim();
+      // Remove percentage info from name
+      name = name.replace(/\(\d+%.*?\)/, '').trim();
+
+      let starter_g = 0;
+      let water_g = 0;
+      let salt_g = 0;
+      const flour_breakdown: Record<string, number> = {};
+      const extras: Record<string, number> = {};
+      const noteLines: string[] = [];
+      let inPreparation = false;
+
+      for (const line of lines) {
+        const cleanLine = line.trim();
+        
+        // Check if we're in the preparation section
+        if (cleanLine.includes('אופן ההכנה') || cleanLine.includes('הכנה:')) {
+          inPreparation = true;
+          continue;
+        }
+
+        // Collect preparation notes
+        if (inPreparation) {
+          if (cleanLine.length > 5) {
+            noteLines.push(cleanLine);
+          }
+          continue;
+        }
+
+        // Parse ingredients
+        // Match patterns like "60 גרם מחמצת" or "מחמצת 60 גרם"
+        const gramMatch = cleanLine.match(/(\d+)\s*(?:גרם|גר'|ג'|g)/gi);
+        
+        if (gramMatch) {
+          // Extract all gram amounts from the line
+          const amounts = [...cleanLine.matchAll(/(\d+)\s*(?:גרם|גר'|ג'|g)/gi)].map(m => parseInt(m[1]));
+          
+          // Check what ingredient this line is about
+          const lowerLine = cleanLine.toLowerCase();
+          
+          // Starter/Sourdough
+          if (cleanLine.includes('מחמצת') || cleanLine.includes('סטארטר') || cleanLine.includes('שאור')) {
+            starter_g = amounts[0] || 0;
+          }
+          // Water
+          else if (cleanLine.includes('מים') && !cleanLine.includes('סיר')) {
+            water_g = amounts[0] || 0;
+          }
+          // Salt
+          else if (cleanLine.includes('מלח') && !cleanLine.includes('אטלנטי') && !cleanLine.includes('תוספ')) {
+            salt_g = amounts[0] || 0;
+          }
+          // Flour types
+          else if (cleanLine.includes('קמח')) {
+            // Try to extract flour type
+            const flourTypes = [
+              { pattern: /קמח\s+לחם/i, name: 'קמח לחם' },
+              { pattern: /קמח\s+מניטובה/i, name: 'מניטובה' },
+              { pattern: /קמח\s+פסטה/i, name: 'קמח פסטה' },
+              { pattern: /קמח\s+מלא/i, name: 'קמח מלא' },
+              { pattern: /קמח\s+לבן/i, name: 'קמח לבן' },
+              { pattern: /קמח\s+70/i, name: 'לבן 70' },
+              { pattern: /קמח\s+80/i, name: 'לבן 80' },
+              { pattern: /קמח$/i, name: 'קמח לבן' },
+            ];
+
+            // Check for multiple flour types in one line (e.g., "250 גרם קמח מניטובה, 100 גרם קמח פסטה")
+            const flourParts = cleanLine.split(',');
+            
+            if (flourParts.length > 1) {
+              // Multiple flours in one line
+              for (const part of flourParts) {
+                const partAmounts = [...part.matchAll(/(\d+)\s*(?:גרם|גר'|ג'|g)/gi)].map(m => parseInt(m[1]));
+                if (partAmounts.length > 0) {
+                  let flourName = 'קמח לבן';
+                  for (const ft of flourTypes) {
+                    if (ft.pattern.test(part)) {
+                      flourName = ft.name;
+                      break;
+                    }
+                  }
+                  flour_breakdown[flourName] = (flour_breakdown[flourName] || 0) + partAmounts[0];
+                }
+              }
+            } else {
+              // Single flour
+              let flourName = 'קמח לבן';
+              for (const ft of flourTypes) {
+                if (ft.pattern.test(cleanLine)) {
+                  flourName = ft.name;
+                  break;
+                }
+              }
+              flour_breakdown[flourName] = (flour_breakdown[flourName] || 0) + amounts[0];
+            }
+          }
+          // Other ingredients (sugar, oil, butter, eggs, etc.)
+          else if (cleanLine.includes('סוכר')) {
+            extras['סוכר'] = amounts[0] || 0;
+          }
+          else if (cleanLine.includes('שמן זית')) {
+            extras['שמן זית'] = amounts[0] || 0;
+          }
+          else if (cleanLine.includes('חמאה')) {
+            extras['חמאה'] = amounts[0] || 0;
+          }
+          else if (cleanLine.includes('ביצ')) {
+            extras['ביצים'] = amounts[0] || 0;
+          }
+          else if (cleanLine.includes('חלב')) {
+            extras['חלב'] = amounts[0] || 0;
+          }
+          else if (cleanLine.includes('שמנת')) {
+            extras['שמנת'] = amounts[0] || 0;
+          }
+        }
       }
 
-      saveRecipes(recipes);
+      // Calculate total flour
+      const flour_total_g = Object.values(flour_breakdown).reduce((a, b) => a + b, 0);
+
+      // Validate we have at least some basic ingredients
+      if (flour_total_g === 0 && starter_g === 0) {
+        return null;
+      }
+
+      return {
+        name: name || 'מתכון מיובא',
+        flour_total_g,
+        water_g,
+        starter_g,
+        salt_g,
+        flour_breakdown,
+        notes: noteLines.slice(0, 5).join('\n'),
+        extras,
+      };
     } catch (error) {
-      toast.error('שגיאה בקריאת הקובץ. וודא שזהו קובץ JSON תקין');
-    } finally {
-      setImporting(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      console.error('Parse error:', error);
+      return null;
     }
   };
 
-  const handleTextImport = () => {
-    if (!textInput.trim()) {
-      toast.error('הכנס טקסט לייבוא');
+  const handleTextChange = (value: string) => {
+    setTextInput(value);
+    setParseError(null);
+    
+    if (value.trim()) {
+      const parsed = parseRecipeText(value);
+      if (parsed) {
+        setParsedPreview(parsed);
+        setParseError(null);
+      } else {
+        setParsedPreview(null);
+        setParseError('לא הצלחתי לזהות מתכון. וודא שיש כמויות בגרמים.');
+      }
+    } else {
+      setParsedPreview(null);
+    }
+  };
+
+  const handleImport = () => {
+    if (!parsedPreview) {
+      toast.error('אין מתכון לייבוא');
       return;
     }
 
     setImporting(true);
     try {
-      const data = JSON.parse(textInput);
-      const recipes = processRecipes(data);
+      const newRecipe: Recipe = {
+        id: `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: parsedPreview.name,
+        flour_total_g: parsedPreview.flour_total_g,
+        water_g: parsedPreview.water_g,
+        starter_g: parsedPreview.starter_g,
+        salt_g: parsedPreview.salt_g,
+        flour_breakdown: parsedPreview.flour_breakdown,
+        notes: parsedPreview.notes + (Object.keys(parsedPreview.extras).length > 0 
+          ? '\n\nתוספות: ' + Object.entries(parsedPreview.extras).map(([k, v]) => `${k} ${v}g`).join(', ')
+          : ''),
+        is_sample: false,
+        created_at: new Date().toISOString(),
+      };
 
-      if (recipes.length === 0) {
-        toast.error('לא נמצאו מתכונים תקינים בטקסט');
-        return;
-      }
+      const stored = localStorage.getItem('recipes');
+      const existingRecipes: Recipe[] = stored ? JSON.parse(stored) : [];
+      const updatedRecipes = [...existingRecipes, newRecipe];
+      localStorage.setItem('recipes', JSON.stringify(updatedRecipes));
 
-      saveRecipes(recipes);
+      onImport([newRecipe]);
+      toast.success(`המתכון "${parsedPreview.name}" יובא בהצלחה!`);
+      setOpen(false);
+      setTextInput('');
+      setParsedPreview(null);
     } catch (error) {
-      toast.error('שגיאה בפענוח הטקסט. וודא שזהו JSON תקין');
+      toast.error('שגיאה בשמירת המתכון');
     } finally {
       setImporting(false);
     }
   };
 
-  const handleClipboardImport = async () => {
-    setImporting(true);
-    try {
-      const text = await navigator.clipboard.readText();
-      const data = JSON.parse(text);
-      const recipes = processRecipes(data);
-
-      if (recipes.length === 0) {
-        toast.error('לא נמצאו מתכונים תקינים בלוח');
-        return;
-      }
-
-      saveRecipes(recipes);
-    } catch (error) {
-      toast.error('שגיאה בקריאה מהלוח. וודא שהתוכן הוא JSON תקין');
-    } finally {
-      setImporting(false);
-    }
+  const calculateHydration = (water: number, flour: number) => {
+    if (flour === 0) return 0;
+    return ((water / flour) * 100).toFixed(0);
   };
-
-  const saveRecipes = (newRecipes: Recipe[]) => {
-    const stored = localStorage.getItem('recipes');
-    const existingRecipes: Recipe[] = stored ? JSON.parse(stored) : [];
-    const updatedRecipes = [...existingRecipes, ...newRecipes];
-    localStorage.setItem('recipes', JSON.stringify(updatedRecipes));
-    
-    onImport(newRecipes);
-    toast.success(`יובאו ${newRecipes.length} מתכונים בהצלחה!`);
-    setOpen(false);
-    setTextInput('');
-  };
-
-  const exampleJson = JSON.stringify({
-    name: "לחם מחמצת",
-    flour_total_g: 500,
-    water_g: 350,
-    starter_g: 100,
-    salt_g: 10,
-    flour_breakdown: { "לבן 70": 80, "מלא": 20 },
-    notes: "הערות..."
-  }, null, 2);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -165,94 +260,105 @@ export default function RecipeImport({ onImport }: RecipeImportProps) {
           ייבוא
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>ייבוא מתכונים</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-amber-500" />
+            ייבוא מתכון חכם
+          </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="file" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="file" className="text-xs">
-              <FileText className="h-3 w-3 ml-1" />
-              קובץ
-            </TabsTrigger>
-            <TabsTrigger value="text" className="text-xs">
-              <FileText className="h-3 w-3 ml-1" />
-              טקסט
-            </TabsTrigger>
-            <TabsTrigger value="clipboard" className="text-xs">
-              <Clipboard className="h-3 w-3 ml-1" />
-              לוח
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="file" className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              העלה קובץ JSON עם מתכון אחד או יותר
-            </div>
-            <Input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleFileUpload}
-              disabled={importing}
-              className="cursor-pointer"
-            />
-          </TabsContent>
-
-          <TabsContent value="text" className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              הדבק את ה-JSON של המתכון כאן
-            </div>
-            <Textarea
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              placeholder={exampleJson}
-              className="min-h-[150px] font-mono text-xs"
-              dir="ltr"
-            />
-            <Button 
-              onClick={handleTextImport} 
-              disabled={importing || !textInput.trim()}
-              className="w-full"
-            >
-              <Check className="h-4 w-4 ml-1" />
-              ייבא מתכון
-            </Button>
-          </TabsContent>
-
-          <TabsContent value="clipboard" className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              הדבק JSON מהלוח ישירות
-            </div>
-            <Button 
-              onClick={handleClipboardImport} 
-              disabled={importing}
-              className="w-full"
-              variant="outline"
-            >
-              <Clipboard className="h-4 w-4 ml-1" />
-              הדבק מהלוח
-            </Button>
-          </TabsContent>
-        </Tabs>
-
-        <div className="mt-4 p-3 bg-muted rounded-lg">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
-            <div className="text-xs text-muted-foreground">
-              <strong>פורמט נדרש:</strong>
-              <pre className="mt-2 text-[10px] overflow-x-auto" dir="ltr">
-{`{
-  "name": "שם המתכון",
-  "flour_total_g": 500,
-  "water_g": 350,
-  "starter_g": 100,
-  "salt_g": 10
-}`}
-              </pre>
-            </div>
+        <div className="space-y-4">
+          <div className="text-sm text-muted-foreground">
+            הדבק את טקסט המתכון והמערכת תנתח אותו אוטומטית
           </div>
+          
+          <Textarea
+            value={textInput}
+            onChange={(e) => handleTextChange(e.target.value)}
+            placeholder={`דוגמה:
+🥖 לחם מחמצת
+
+מרכיבים:
+100 גרם מחמצת
+350 גרם מים
+500 גרם קמח לחם
+10 גרם מלח
+
+אופן ההכנה:
+מערבבים הכל...`}
+            className="min-h-[180px] text-sm"
+          />
+
+          {parseError && (
+            <div className="flex items-center gap-2 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              {parseError}
+            </div>
+          )}
+
+          {parsedPreview && (
+            <div className="p-4 bg-accent/30 rounded-lg space-y-3 border border-accent">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <span className="font-semibold">{parsedPreview.name}</span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-background/50 p-2 rounded">
+                  <span className="text-muted-foreground">קמח:</span>
+                  <span className="font-medium mr-1">{parsedPreview.flour_total_g}g</span>
+                </div>
+                <div className="bg-background/50 p-2 rounded">
+                  <span className="text-muted-foreground">מים:</span>
+                  <span className="font-medium mr-1">{parsedPreview.water_g}g</span>
+                </div>
+                <div className="bg-background/50 p-2 rounded">
+                  <span className="text-muted-foreground">מחמצת:</span>
+                  <span className="font-medium mr-1">{parsedPreview.starter_g}g</span>
+                </div>
+                <div className="bg-background/50 p-2 rounded">
+                  <span className="text-muted-foreground">מלח:</span>
+                  <span className="font-medium mr-1">{parsedPreview.salt_g}g</span>
+                </div>
+              </div>
+
+              {parsedPreview.flour_total_g > 0 && (
+                <div className="text-sm">
+                  <span className="text-amber-600 font-medium">
+                    {calculateHydration(parsedPreview.water_g, parsedPreview.flour_total_g)}% הידרציה
+                  </span>
+                </div>
+              )}
+
+              {Object.keys(parsedPreview.flour_breakdown).length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-medium">סוגי קמח: </span>
+                  {Object.entries(parsedPreview.flour_breakdown).map(([name, amount]) => (
+                    <span key={name} className="mr-2">{name} ({amount}g)</span>
+                  ))}
+                </div>
+              )}
+
+              {Object.keys(parsedPreview.extras).length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-medium">תוספות: </span>
+                  {Object.entries(parsedPreview.extras).map(([name, amount]) => (
+                    <span key={name} className="mr-2">{name} ({amount}g)</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <Button 
+            onClick={handleImport} 
+            disabled={importing || !parsedPreview}
+            className="w-full gradient-golden"
+          >
+            <Check className="h-4 w-4 ml-1" />
+            ייבא מתכון
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
