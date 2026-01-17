@@ -5,15 +5,16 @@ import {
   Plus, 
   ChevronLeft, 
   Wheat, 
-  ChefHat,
   Droplets,
   Scale,
   BookOpen,
   AlertCircle,
   Clock,
   Flame,
+  Thermometer,
+  Timer,
   Sparkles,
-  ArrowUpRight
+  ChefHat
 } from 'lucide-react';
 import { stybelFlours, getRecommendedFloursForSourdough } from '@/data/stybel-flours';
 import { cn } from '@/lib/utils';
@@ -44,6 +45,40 @@ const dailyTips = [
     title: 'אפייה',
     tip: 'חממו את הסיר הברזל 30-45 דקות לפני האפייה לתוצאות מיטביות.',
     icon: '🔥'
+  }
+];
+
+// Hot topics data - inspired by reference design
+const hotTopics = [
+  {
+    id: 'temperature',
+    title: 'טמפרטורה והתפחה',
+    subtitle: 'אידיאלי: 24°C-27°C',
+    description: 'טמפרטורה השפעה על זמני התפיחה המומלצים.',
+    icon: Thermometer,
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+    path: '/guides'
+  },
+  {
+    id: 'flours',
+    title: 'קמחים מומלצים',
+    subtitle: 'שטיבל לחם (2)',
+    description: 'קמח חזק ומתאים למחמצת.',
+    icon: Wheat,
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    path: '/flours'
+  },
+  {
+    id: 'hydration',
+    title: 'הידרציה (יחס מים-קמח)',
+    subtitle: '65% → 75%',
+    description: 'השפעה על מרקם ואווריריות.',
+    icon: Droplets,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    path: '/calculator/hydration'
   }
 ];
 
@@ -84,116 +119,113 @@ export default function Dashboard() {
   };
 
   const getStarterStatus = () => {
-    if (starterFeeds.length === 0) return { status: 'new', color: 'text-muted-foreground', bg: 'bg-muted' };
+    if (starterFeeds.length === 0) return { status: 'new', label: 'חדשה', color: 'text-muted-foreground', bg: 'bg-muted', emoji: '🫙' };
     const lastFeed = starterFeeds[0];
     const hours = Math.floor((Date.now() - new Date(lastFeed.fed_at).getTime()) / (1000 * 60 * 60));
-    if (hours < 12) return { status: 'fresh', color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' };
-    if (hours < 24) return { status: 'ready', color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' };
-    return { status: 'hungry', color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' };
+    if (hours < 12) return { status: 'fresh', label: 'טרייה', color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30', emoji: '🌱' };
+    if (hours < 24) return { status: 'ready', label: 'מוכנה', color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30', emoji: '✨' };
+    return { status: 'hungry', label: 'רעבה', color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30', emoji: '🍽️' };
   };
 
   const starterStatus = getStarterStatus();
-  const recommendedFlours = getRecommendedFloursForSourdough().slice(0, 3);
 
   return (
-    <div className="space-y-5 animate-fade-in pb-4">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-secondary p-5">
-        <div className="absolute top-0 left-0 w-40 h-40 bg-accent/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
-        <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary/10 rounded-full translate-x-1/2 translate-y-1/2 blur-2xl" />
+    <div className="space-y-6 pb-6">
+      {/* Hero Section - Inspired by reference with warm tones */}
+      <div 
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-50 via-orange-50/50 to-amber-100/30 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-amber-900/20 p-6 animate-fade-in"
+        style={{ animationDelay: '0ms', animationFillMode: 'both' }}
+      >
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-32 h-32 bg-amber-200/30 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-24 h-24 bg-orange-200/40 rounded-full translate-x-1/3 translate-y-1/3 blur-2xl" />
         
-        <div className="relative">
+        <div className="relative text-center">
+          {/* Starter jar illustration placeholder - using emoji for now */}
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 flex items-center justify-center text-4xl shadow-lg border-2 border-amber-200/50 dark:border-amber-700/50">
+            🫙
+          </div>
+          
           <p className="text-sm text-muted-foreground mb-1">{greeting} 👋</p>
-          <h1 className="text-2xl font-bold font-rubik mb-2">מחמצת—סיידקיק</h1>
-          <p className="text-sm text-muted-foreground">העוזר שלך לאפיית לחם מחמצת מושלם</p>
+          <h1 className="text-2xl font-bold font-rubik mb-1">מחמצת שלי</h1>
+          <p className="text-sm text-muted-foreground">הדרך הפשוטה לבצק המושלם</p>
         </div>
       </div>
 
-      {/* Primary CTA */}
-      <Button
-        onClick={() => navigate('/recipes/new')}
-        className="w-full h-14 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group animate-fade-in"
+      {/* Quick Feature Icons - Inspired by reference */}
+      <div 
+        className="grid grid-cols-3 gap-3 animate-fade-in"
         style={{ animationDelay: '100ms', animationFillMode: 'both' }}
       >
-        <Plus className="h-5 w-5 ml-2 group-hover:rotate-90 transition-transform duration-300" />
-        בנה מתכון חדש
-        <Sparkles className="h-4 w-4 mr-2 opacity-60" />
-      </Button>
-
-      {/* Quick Start Actions */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => navigate('/bake/new')}
-          className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border border-orange-200 dark:border-orange-800 hover:shadow-lg transition-all duration-300 group text-right animate-fade-in"
-          style={{ animationDelay: '150ms', animationFillMode: 'both' }}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
-              <Flame className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+        {[
+          { icon: BookOpen, label: 'מתכונים', path: '/recipes', count: savedRecipes.length },
+          { icon: Scale, label: 'הזנה קלה', path: '/starter' },
+          { icon: Timer, label: 'לוח זמנים', path: '/bakes' },
+        ].map((item, index) => (
+          <button
+            key={item.path}
+            onClick={() => navigate(item.path)}
+            className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all duration-300"
+          >
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-900/40 dark:to-orange-900/30 flex items-center justify-center border border-amber-200/50 dark:border-amber-700/50">
+              <item.icon className="h-5 w-5 text-amber-700 dark:text-amber-400" />
             </div>
-            <ArrowUpRight className="h-4 w-4 text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity mr-auto" />
-          </div>
-          <h3 className="font-semibold text-foreground">התחל אפייה</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">תזמון ומעקב</p>
-        </button>
-
-        <button
-          onClick={() => navigate('/recipes')}
-          className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 hover:shadow-lg transition-all duration-300 group text-right animate-fade-in"
-          style={{ animationDelay: '200ms', animationFillMode: 'both' }}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <ArrowUpRight className="h-4 w-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity mr-auto" />
-          </div>
-          <h3 className="font-semibold text-foreground">המתכונים שלי</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">{savedRecipes.length} מתכונים</p>
-        </button>
+            <span className="text-xs font-medium text-foreground">{item.label}</span>
+            {item.count !== undefined && (
+              <span className="text-[10px] text-muted-foreground">({item.count})</span>
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Starter Status Card */}
+      {/* Primary CTA Button */}
+      <Button
+        onClick={() => navigate('/bake/new')}
+        className="w-full h-14 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 text-white font-bold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group animate-fade-in border-0"
+        style={{ animationDelay: '150ms', animationFillMode: 'both' }}
+      >
+        <Flame className="h-5 w-5 ml-2 group-hover:scale-110 transition-transform" />
+        התחל לאפות
+      </Button>
+
+      {/* Starter Status Card - Cute illustration style */}
       <div 
         onClick={() => navigate('/starter')}
-        className="relative overflow-hidden p-4 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer group animate-fade-in"
-        style={{ animationDelay: '250ms', animationFillMode: 'both' }}
+        className="relative overflow-hidden p-4 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer group animate-fade-in"
+        style={{ animationDelay: '200ms', animationFillMode: 'both' }}
       >
         <div className="flex items-center gap-4">
+          {/* Starter jar icon */}
           <div className={cn(
-            "w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105",
-            starterStatus.bg
+            "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl transition-transform group-hover:scale-105 border-2",
+            starterStatus.bg,
+            starterStatus.status === 'hungry' ? 'border-red-200 dark:border-red-800' : 
+            starterStatus.status === 'ready' ? 'border-amber-200 dark:border-amber-800' :
+            starterStatus.status === 'fresh' ? 'border-green-200 dark:border-green-800' :
+            'border-border'
           )}>
-            <Wheat className={cn("h-7 w-7", starterStatus.color)} />
+            {starterStatus.emoji}
           </div>
           
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold">המחמצת שלי</h3>
-              {starterStatus.status === 'hungry' && (
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-                  רעבה! 🍽️
-                </span>
-              )}
-              {starterStatus.status === 'ready' && (
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
-                  מוכנה ✨
-                </span>
-              )}
-              {starterStatus.status === 'fresh' && (
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                  טרייה 🌱
-                </span>
-              )}
+              <h3 className="font-semibold text-lg">המחמצת שלי</h3>
+              <span className={cn(
+                "px-2.5 py-1 text-xs font-medium rounded-full",
+                starterStatus.bg,
+                starterStatus.color
+              )}>
+                {starterStatus.label}
+              </span>
             </div>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted-foreground mt-1">
               {starterFeeds.length > 0 ? (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
+                <span className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
                   הוזנה לפני {getTimeSinceLastFeed()}
                 </span>
               ) : (
-                'לחץ לרישום הזנה ראשונה'
+                'לחצו לרישום הזנה ראשונה'
               )}
             </p>
           </div>
@@ -202,84 +234,87 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Tools Grid */}
+      {/* Hot Topics Section - Inspired by reference design */}
       <div 
         className="space-y-3 animate-fade-in"
-        style={{ animationDelay: '300ms', animationFillMode: 'both' }}
+        style={{ animationDelay: '250ms', animationFillMode: 'both' }}
       >
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">כלים מהירים</h2>
-          <button 
-            onClick={() => navigate('/tools')}
-            className="text-xs text-primary hover:underline"
-          >
-            הכל →
-          </button>
-        </div>
+        <h2 className="font-semibold text-lg font-rubik text-center">נושאים חמים</h2>
         
-        <div className="grid grid-cols-4 gap-2">
-          {[
-            { icon: Scale, label: 'כלים', path: '/tools', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-            { icon: BookOpen, label: 'מדריכים', path: '/guides', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-            { icon: Droplets, label: 'הידרציה', path: '/calculator/hydration', color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
-            { icon: AlertCircle, label: 'בעיות', path: '/troubleshooting', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-100 dark:bg-rose-900/30' },
-          ].map((item, index) => (
+        <div className="space-y-3">
+          {hotTopics.map((topic, index) => (
             <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all duration-200 animate-fade-in"
-              style={{ animationDelay: `${350 + index * 50}ms`, animationFillMode: 'both' }}
+              key={topic.id}
+              onClick={() => navigate(topic.path)}
+              className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all duration-300 text-right animate-fade-in"
+              style={{ animationDelay: `${300 + index * 50}ms`, animationFillMode: 'both' }}
             >
-              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", item.bg)}>
-                <item.icon className={cn("h-5 w-5", item.color)} />
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">{topic.title}</h3>
+                <p className="text-xs text-primary font-medium mt-0.5">{topic.subtitle}</p>
+                <p className="text-xs text-muted-foreground mt-1">{topic.description}</p>
               </div>
-              <span className="text-xs font-medium">{item.label}</span>
+              
+              <div className={cn(
+                "w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0",
+                topic.bgColor
+              )}>
+                <topic.icon className={cn("h-7 w-7", topic.color)} />
+              </div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Flour Guide Preview */}
+      {/* Quick Tools Row */}
       <div 
-        onClick={() => navigate('/flours')}
-        className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800 hover:shadow-lg transition-all duration-300 cursor-pointer group animate-fade-in"
-        style={{ animationDelay: '550ms', animationFillMode: 'both' }}
+        className="space-y-3 animate-fade-in"
+        style={{ animationDelay: '450ms', animationFillMode: 'both' }}
       >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
-              <Wheat className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold">מדריך קמחים</h3>
-              <p className="text-xs text-muted-foreground">{stybelFlours.length} סוגי קמח</p>
-            </div>
-          </div>
-          <ChevronLeft className="h-5 w-5 text-muted-foreground group-hover:text-amber-600 group-hover:-translate-x-1 transition-all" />
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold font-rubik">כלים מהירים</h2>
+          <button 
+            onClick={() => navigate('/tools')}
+            className="text-xs text-primary hover:underline font-medium"
+          >
+            הכל ←
+          </button>
         </div>
         
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {recommendedFlours.map(flour => (
-            <div key={flour.id} className="flex-shrink-0 px-4 py-2 bg-white/60 dark:bg-black/20 backdrop-blur-sm rounded-lg text-center min-w-[80px]">
-              <div className="text-xs text-muted-foreground font-medium">{flour.code}</div>
-              <div className="font-rubik text-lg font-bold text-amber-700 dark:text-amber-400">{flour.proteinPercent}%</div>
-              <div className="text-[10px] text-muted-foreground">חלבון</div>
-            </div>
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { icon: Scale, label: 'מחשבון', path: '/calculator', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+            { icon: BookOpen, label: 'מדריכים', path: '/guides', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+            { icon: Wheat, label: 'קמחים', path: '/flours', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+            { icon: AlertCircle, label: 'בעיות', path: '/troubleshooting', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-100 dark:bg-rose-900/30' },
+          ].map((item, index) => (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all duration-200"
+            >
+              <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", item.bg)}>
+                <item.icon className={cn("h-5 w-5", item.color)} />
+              </div>
+              <span className="text-[11px] font-medium">{item.label}</span>
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Daily Tip */}
+      {/* Daily Tip Card - Refined style */}
       <div 
-        className="relative overflow-hidden p-4 rounded-xl bg-card border border-border animate-fade-in"
-        style={{ animationDelay: '600ms', animationFillMode: 'both' }}
+        className="relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-amber-50/80 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/10 border border-amber-200/50 dark:border-amber-800/30 animate-fade-in"
+        style={{ animationDelay: '500ms', animationFillMode: 'both' }}
       >
         <div className="flex items-start gap-3">
-          <div className="text-2xl">{dailyTip.icon}</div>
+          <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-xl flex-shrink-0 border border-amber-200/50 dark:border-amber-700/50">
+            {dailyTip.icon}
+          </div>
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <ChefHat className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium text-primary">טיפ היום</span>
+            <div className="flex items-center gap-2 mb-1.5">
+              <ChefHat className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">טיפ היום</span>
               <span className="text-xs text-muted-foreground">• {dailyTip.title}</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -288,6 +323,22 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Build Recipe CTA - Secondary */}
+      <button
+        onClick={() => navigate('/recipes/new')}
+        className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-card border-2 border-dashed border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 group animate-fade-in"
+        style={{ animationDelay: '550ms', animationFillMode: 'both' }}
+      >
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+          <Plus className="h-5 w-5 text-primary" />
+        </div>
+        <div className="text-right">
+          <span className="font-semibold text-foreground">בנה מתכון חדש</span>
+          <p className="text-xs text-muted-foreground">התאם מתכון לצרכים שלך</p>
+        </div>
+        <Sparkles className="h-4 w-4 text-primary/60 mr-auto" />
+      </button>
     </div>
   );
 }
