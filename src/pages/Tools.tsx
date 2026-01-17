@@ -10,7 +10,9 @@ import {
   Scale,
   Cloud,
   CheckSquare,
-  ChevronDown
+  ChevronDown,
+  FlaskConical,
+  ArrowLeftRight
 } from 'lucide-react';
 import { BakingTimer } from '@/components/BakingTimer';
 import { HydrationVisualizer } from '@/components/HydrationVisualizer';
@@ -18,6 +20,8 @@ import { FermentationCalculator } from '@/components/FermentationCalculator';
 import { BreadWeightCalculator } from '@/components/BreadWeightCalculator';
 import { BakingChecklist } from '@/components/BakingChecklist';
 import { WeatherBakingTips } from '@/components/WeatherBakingTips';
+import { RecipeScalingCalculator } from '@/components/RecipeScalingCalculator';
+import { StarterFeedingCalculator } from '@/components/StarterFeedingCalculator';
 import { cn } from '@/lib/utils';
 import {
   Collapsible,
@@ -44,6 +48,24 @@ const tools: ToolSection[] = [
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-100 dark:bg-blue-900/30',
     component: <BakingTimer />
+  },
+  {
+    id: 'scaling',
+    title: 'מחשבון סקיילינג מתכון',
+    description: 'הגדלה/הקטנה לפי מספר כיכרות',
+    icon: <ArrowLeftRight className="h-5 w-5" />,
+    color: 'text-indigo-600 dark:text-indigo-400',
+    bgColor: 'bg-indigo-100 dark:bg-indigo-900/30',
+    component: <RecipeScalingCalculator />
+  },
+  {
+    id: 'starter-feeding',
+    title: 'מחשבון יחס האכלה',
+    description: 'חישוב כמויות האכלה למחמצת',
+    icon: <FlaskConical className="h-5 w-5" />,
+    color: 'text-amber-600 dark:text-amber-400',
+    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    component: <StarterFeedingCalculator />
   },
   {
     id: 'fermentation',
