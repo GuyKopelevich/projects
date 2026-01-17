@@ -277,7 +277,15 @@ export default function RecipeBuilder() {
         <div className="bread-card-flat">
           <div className="flex items-center justify-between mb-2">
             <Label className="font-medium">קמח כולל</Label>
-            <span className="text-lg font-semibold font-rubik">{flourTotal}g</span>
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                value={flourTotal}
+                onChange={(e) => setFlourTotal(Math.max(200, Math.min(2000, Number(e.target.value) || 200)))}
+                className="w-20 h-8 text-left font-semibold font-rubik text-base p-1"
+              />
+              <span className="text-sm text-muted-foreground">g</span>
+            </div>
           </div>
           <Slider value={[flourTotal]} onValueChange={([v]) => setFlourTotal(v)} min={200} max={2000} step={10} />
         </div>
@@ -287,7 +295,15 @@ export default function RecipeBuilder() {
             <Label className="font-medium flex items-center gap-2">
               <Droplets className="h-4 w-4 text-timer" /> מים
             </Label>
-            <span className="text-lg font-semibold font-rubik">{water}g</span>
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                value={water}
+                onChange={(e) => setWater(Math.max(100, Math.min(1500, Number(e.target.value) || 100)))}
+                className="w-20 h-8 text-left font-semibold font-rubik text-base p-1"
+              />
+              <span className="text-sm text-muted-foreground">g</span>
+            </div>
           </div>
           <Slider value={[water]} onValueChange={([v]) => setWater(v)} min={100} max={1500} step={5} />
         </div>
@@ -295,7 +311,15 @@ export default function RecipeBuilder() {
         <div className="bread-card-flat">
           <div className="flex items-center justify-between mb-2">
             <Label className="font-medium">מחמצת</Label>
-            <span className="text-lg font-semibold font-rubik">{starter}g</span>
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                value={starter}
+                onChange={(e) => setStarter(Math.max(20, Math.min(500, Number(e.target.value) || 20)))}
+                className="w-20 h-8 text-left font-semibold font-rubik text-base p-1"
+              />
+              <span className="text-sm text-muted-foreground">g</span>
+            </div>
           </div>
           <Slider value={[starter]} onValueChange={([v]) => setStarter(v)} min={20} max={500} step={5} />
         </div>
@@ -303,7 +327,16 @@ export default function RecipeBuilder() {
         <div className="bread-card-flat">
           <div className="flex items-center justify-between mb-2">
             <Label className="font-medium">מלח</Label>
-            <span className="text-lg font-semibold font-rubik">{salt}g</span>
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                value={salt}
+                onChange={(e) => setSalt(Math.max(0, Math.min(50, Number(e.target.value) || 0)))}
+                className="w-20 h-8 text-left font-semibold font-rubik text-base p-1"
+                step="0.5"
+              />
+              <span className="text-sm text-muted-foreground">g</span>
+            </div>
           </div>
           <Slider value={[salt]} onValueChange={([v]) => setSalt(v)} min={0} max={50} step={0.5} />
         </div>
