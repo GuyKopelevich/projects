@@ -8,6 +8,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Recipes from "./pages/Recipes";
 import RecipeBuilder from "./pages/RecipeBuilder";
+import RecipeDetail from "./pages/RecipeDetail";
 import StarterTracker from "./pages/StarterTracker";
 import BakesLog from "./pages/BakesLog";
 import NewBake from "./pages/NewBake";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
           <Route path="/recipes" element={<AppLayout><Recipes /></AppLayout>} />
           <Route path="/recipes/new" element={<AppLayout><RecipeBuilder /></AppLayout>} />
+          <Route path="/recipes/:id" element={<AppLayout><RecipeDetail /></AppLayout>} />
           <Route path="/starter" element={<AppLayout><StarterTracker /></AppLayout>} />
           <Route path="/log" element={<AppLayout><BakesLog /></AppLayout>} />
           <Route path="/bake/new" element={<AppLayout><NewBake /></AppLayout>} />

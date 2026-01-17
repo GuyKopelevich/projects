@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { BottomNavigation } from './BottomNavigation';
+import { AppHeader } from './AppHeader';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -15,8 +16,11 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="glow-orb glow-orb-3" />
       </div>
 
+      {/* Header with search */}
+      <AppHeader />
+
       {/* Main content */}
-      <main className="content-container py-6 pb-28 min-h-screen relative">
+      <main className="content-container py-4 pb-28 min-h-screen relative">
         {children}
       </main>
 

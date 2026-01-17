@@ -203,9 +203,46 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          image_url: string
+          recipe_id: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          recipe_id: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          recipe_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_images_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipes: {
         Row: {
+          cover_image_url: string | null
           created_at: string | null
+          description: string | null
           flour_breakdown: Json | null
           flour_total_g: number
           id: string
@@ -219,7 +256,9 @@ export type Database = {
           water_g: number
         }
         Insert: {
+          cover_image_url?: string | null
           created_at?: string | null
+          description?: string | null
           flour_breakdown?: Json | null
           flour_total_g: number
           id?: string
@@ -233,7 +272,9 @@ export type Database = {
           water_g: number
         }
         Update: {
+          cover_image_url?: string | null
           created_at?: string | null
+          description?: string | null
           flour_breakdown?: Json | null
           flour_total_g?: number
           id?: string
