@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    הגדרת IME — מגדיר את השפות הנתמכות על ידי המקלדת.
+    מוזכר ב-AndroidManifest.xml תחת <meta-data android:name="android.view.im">
+-->
+<input-method xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <subtype
+        android:label="עברית"
+        android:imeSubtypeLocale="iw_IL"
+        android:imeSubtypeMode="keyboard" />
+
+    <subtype
+        android:label="English (US)"
+        android:imeSubtypeLocale="en_US"
+        android:imeSubtypeMode="keyboard" />
+
+</input-method>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    מקלדת QWERTY אנגלית
+    מבנה: 4 שורות אופקיות בתוך LinearLayout אנכי
+    כל כפתור מקבל layout_weight=1 ו-layout_width=0dp לחלוקה שווה
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#1A1A2E"
+    android:padding="4dp">
+
+    <!-- ══ שורה 1: Q W E R T Y U I O P ══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+
+        <Button android:id="@+id/btn_q" style="@style/KeyStyle" android:text="Q" />
+        <Button android:id="@+id/btn_w" style="@style/KeyStyle" android:text="W" />
+        <Button android:id="@+id/btn_e" style="@style/KeyStyle" android:text="E" />
+        <Button android:id="@+id/btn_r" style="@style/KeyStyle" android:text="R" />
+        <Button android:id="@+id/btn_t" style="@style/KeyStyle" android:text="T" />
+        <Button android:id="@+id/btn_y" style="@style/KeyStyle" android:text="Y" />
+        <Button android:id="@+id/btn_u" style="@style/KeyStyle" android:text="U" />
+        <Button android:id="@+id/btn_i" style="@style/KeyStyle" android:text="I" />
+        <Button android:id="@+id/btn_o" style="@style/KeyStyle" android:text="O" />
+        <Button android:id="@+id/btn_p" style="@style/KeyStyle" android:text="P" />
+    </LinearLayout>
+
+    <!-- ══ שורה 2: A S D F G H J K L (ממורכזת) ══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+
+        <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.5" />
+        <Button android:id="@+id/btn_a" style="@style/KeyStyle" android:text="A" />
+        <Button android:id="@+id/btn_s" style="@style/KeyStyle" android:text="S" />
+        <Button android:id="@+id/btn_d" style="@style/KeyStyle" android:text="D" />
+        <Button android:id="@+id/btn_f" style="@style/KeyStyle" android:text="F" />
+        <Button android:id="@+id/btn_g" style="@style/KeyStyle" android:text="G" />
+        <Button android:id="@+id/btn_h" style="@style/KeyStyle" android:text="H" />
+        <Button android:id="@+id/btn_j" style="@style/KeyStyle" android:text="J" />
+        <Button android:id="@+id/btn_k" style="@style/KeyStyle" android:text="K" />
+        <Button android:id="@+id/btn_l" style="@style/KeyStyle" android:text="L" />
+        <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.5" />
+    </LinearLayout>
+
+    <!-- ══ שורה 3: Z X C V B N M + ⌫ ══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+
+        <Button android:id="@+id/btn_z" style="@style/KeyStyle" android:text="Z" />
+        <Button android:id="@+id/btn_x" style="@style/KeyStyle" android:text="X" />
+        <Button android:id="@+id/btn_c" style="@style/KeyStyle" android:text="C" />
+        <Button android:id="@+id/btn_v" style="@style/KeyStyle" android:text="V" />
+        <Button android:id="@+id/btn_b" style="@style/KeyStyle" android:text="B" />
+        <Button android:id="@+id/btn_n" style="@style/KeyStyle" android:text="N" />
+        <Button android:id="@+id/btn_m" style="@style/KeyStyle" android:text="M" />
+        <Button
+            android:id="@+id/btn_backspace"
+            style="@style/KeyStyleSpecial"
+            android:layout_weight="1.5"
+            android:text="⌫" />
+    </LinearLayout>
+
+    <!-- ══ שורה 4: EN↔עב | רווח | אנטר ══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_lang"
+            style="@style/KeyStyleSpecial"
+            android:layout_weight="1.5"
+            android:text="עב" />
+
+        <Button
+            android:id="@+id/btn_space"
+            style="@style/KeyStyleSpecial"
+            android:layout_weight="5"
+            android:text="רווח" />
+
+        <Button
+            android:id="@+id/btn_enter"
+            style="@style/KeyStyleSpecial"
+            android:layout_weight="2"
+            android:text="↵" />
+    </LinearLayout>
+
+</LinearLayout>
