@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    מקלדת עברית — פריסה תקנית ישראלית ממופה לעמדות QWERTY
+    שורה 1 (10): / ' ק ר א ט ו ן ם פ
+    שורה 2 (9):  ש ד ג כ ע י ח ל ך
+    שורה 3 (10): ז ס ב ה נ מ צ ת ץ ף + ⌫
+    שורה 4:      EN | רווח | ↵
+
+    הכפתורים משתמשים באותם IDs כמו keyboard_english.xml (לפי מיקום QWERTY),
+    כך ש-EmojiKeyboardService יכול לטפל בשני ה-layouts עם אותו קוד.
+    תווים נוספים (ת, ץ, ף) מקבלים IDs ייחודיים: btn_extra_1/2/3
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#1A1A2E"
+    android:padding="4dp">
+
+    <!-- ══ שורה 1: / ' ק ר א ט ו ן ם פ ══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+
+        <Button android:id="@+id/btn_q" style="@style/KeyStyle" android:text="/" />
+        <Button android:id="@+id/btn_w" style="@style/KeyStyle" android:text="'" />
+        <Button android:id="@+id/btn_e" style="@style/KeyStyle" android:text="ק" />
+        <Button android:id="@+id/btn_r" style="@style/KeyStyle" android:text="ר" />
+        <Button android:id="@+id/btn_t" style="@style/KeyStyle" android:text="א" />
+        <Button android:id="@+id/btn_y" style="@style/KeyStyle" android:text="ט" />
+        <Button android:id="@+id/btn_u" style="@style/KeyStyle" android:text="ו" />
+        <Button android:id="@+id/btn_i" style="@style/KeyStyle" android:text="ן" />
+        <Button android:id="@+id/btn_o" style="@style/KeyStyle" android:text="ם" />
+        <Button android:id="@+id/btn_p" style="@style/KeyStyle" android:text="פ" />
+    </LinearLayout>
+
+    <!-- ══ שורה 2: ש ד ג כ ע י ח ל ך (ממורכזת) ══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+
+        <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.5" />
+        <Button android:id="@+id/btn_a" style="@style/KeyStyle" android:text="ש" />
+        <Button android:id="@+id/btn_s" style="@style/KeyStyle" android:text="ד" />
+        <Button android:id="@+id/btn_d" style="@style/KeyStyle" android:text="ג" />
+        <Button android:id="@+id/btn_f" style="@style/KeyStyle" android:text="כ" />
+        <Button android:id="@+id/btn_g" style="@style/KeyStyle" android:text="ע" />
+        <Button android:id="@+id/btn_h" style="@style/KeyStyle" android:text="י" />
+        <Button android:id="@+id/btn_j" style="@style/KeyStyle" android:text="ח" />
+        <Button android:id="@+id/btn_k" style="@style/KeyStyle" android:text="ל" />
+        <Button android:id="@+id/btn_l" style="@style/KeyStyle" android:text="ך" />
+        <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.5" />
+    </LinearLayout>
+
+    <!-- ══ שורה 3: ז ס ב ה נ מ צ ת ץ ף ⌫ ══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+
+        <Button android:id="@+id/btn_z" style="@style/KeyStyle" android:text="ז" />
+        <Button android:id="@+id/btn_x" style="@style/KeyStyle" android:text="ס" />
+        <Button android:id="@+id/btn_c" style="@style/KeyStyle" android:text="ב" />
+        <Button android:id="@+id/btn_v" style="@style/KeyStyle" android:text="ה" />
+        <Button android:id="@+id/btn_b" style="@style/KeyStyle" android:text="נ" />
+        <Button android:id="@+id/btn_n" style="@style/KeyStyle" android:text="מ" />
+        <Button android:id="@+id/btn_m" style="@style/KeyStyle" android:text="צ" />
+        <!-- תווים עבריים נוספים — IDs ייחודיים -->
+        <Button android:id="@+id/btn_extra_1" style="@style/KeyStyle" android:text="ת" />
+        <Button android:id="@+id/btn_extra_2" style="@style/KeyStyle" android:text="ץ" />
+        <Button android:id="@+id/btn_extra_3" style="@style/KeyStyle" android:text="ף" />
+        <Button
+            android:id="@+id/btn_backspace"
+            style="@style/KeyStyleSpecial"
+            android:layout_weight="1.5"
+            android:text="⌫" />
+    </LinearLayout>
+
+    <!-- ══ שורה 4: EN | רווח | ↵ ══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_lang"
+            style="@style/KeyStyleSpecial"
+            android:layout_weight="1.5"
+            android:text="EN" />
+
+        <Button
+            android:id="@+id/btn_space"
+            style="@style/KeyStyleSpecial"
+            android:layout_weight="5"
+            android:text="רווח" />
+
+        <Button
+            android:id="@+id/btn_enter"
+            style="@style/KeyStyleSpecial"
+            android:layout_weight="2"
+            android:text="↵" />
+    </LinearLayout>
+
+</LinearLayout>
