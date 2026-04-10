@@ -83,7 +83,7 @@
     .dog-card .card-img {
       width: 100%; height: 76%;
       object-fit: cover; display: block;
-      pointer-events: none; draggable: false;
+      pointer-events: none;
     }
     .dog-card .card-body { padding: 11px 15px; }
     .dog-card .card-name { font-size: 1.25rem; font-weight: 700; color: var(--dark); direction: rtl; }
@@ -202,7 +202,6 @@
       border-radius: 20px; overflow: hidden;
       background: var(--white);
       box-shadow: 0 16px 50px rgba(0,0,0,.38);
-      animation: wpop .6s cubic-bezier(.175,.885,.32,1.275) forwards;
     }
     @keyframes wpop {
       from { transform: scale(0) rotate(-12deg); opacity: 0; }
@@ -451,7 +450,7 @@ function makeCard(dog, isTop) {
   const c = document.createElement('div');
   c.className = `dog-card ${isTop ? 'top-card' : 'back-card'}`;
   c.innerHTML = `
-    <img class="card-img" src="${dog.imageUrl}" alt="${dog.name}" draggable="false">
+    <img class="card-img" src="${dog.imageUrl}" alt="${dog.name}" draggable="false" loading="lazy">
     <div class="swipe-ol ol-like"><div class="ol-stamp">❤️ אוהב!</div></div>
     <div class="swipe-ol ol-nope"><div class="ol-stamp">✕ לא</div></div>
     <div class="card-body">
@@ -571,14 +570,14 @@ function endSwipe() {
       <div style="
         position:absolute;inset:0;display:flex;flex-direction:column;
         align-items:center;justify-content:center;gap:12px;
-        background:white;border-radius:var(--radius);
-        color:var(--dark);text-align:center;padding:20px;direction:rtl;">
+        background:white;border-radius:22px;
+        color:#1e293b;text-align:center;padding:20px;direction:rtl;">
         <div style="font-size:3rem">😅</div>
         <div style="font-size:1.1rem;font-weight:700;">לא אהבת אף כלב?</div>
-        <div style="font-size:.85rem;color:var(--muted);">בוא ננסה שוב!</div>
+        <div style="font-size:.85rem;color:#64748b;">בוא ננסה שוב!</div>
         <button onclick="restartGame()" style="
           margin-top:8px;padding:10px 22px;
-          background:var(--grad-a);color:white;
+          background:#667eea;color:white;
           border:none;border-radius:50px;
           font-size:.9rem;font-weight:700;cursor:pointer;">
           🔄 נסה שוב
@@ -632,8 +631,10 @@ function showMatch() {
   const title = n === 2 ? '🏆 הגמר הגדול!' : n <= 4 ? '🥊 חצי גמר' : `🏅 סיבוב ${tRoundNum}`;
   document.getElementById('t-title').textContent   = title;
   document.getElementById('t-sub').textContent     = 'לחץ על הכלב שאתה מעדיף';
+  const remaining = likedDogs.length - tDoneM;
+  const remainTxt = remaining === 1 ? 'כלב 1 נותר' : `${remaining} כלבים נותרו`;
   document.getElementById('t-counter').textContent =
-    `שלב ${tDoneM} מתוך ${tTotalM} · ${likedDogs.length - tDoneM} כלבים נותרו`;
+    `שלב ${tDoneM} מתוך ${tTotalM} · ${remainTxt}`;
 
   // Render cards
   const row = document.getElementById('matchup-row');
@@ -655,7 +656,7 @@ function makeTCard(dog) {
   const el = document.createElement('div');
   el.className = 't-card';
   el.innerHTML = `
-    <img src="${dog.imageUrl}" alt="${dog.name}" draggable="false">
+    <img src="${dog.imageUrl}" alt="${dog.name}" draggable="false" loading="lazy">
     <div class="t-name">${dog.name}</div>`;
   return el;
 }
@@ -678,9 +679,14 @@ function pickWinner(winner, winEl, loseEl) {
 /* ─── WINNER ──────────────────────────────────────────────────────────── */
 function showWinner(dog) {
   showScreen('screen-winner');
-  document.getElementById('winner-el').innerHTML = `
-    <img src="${dog.imageUrl}" alt="${dog.name}">
+  const el = document.getElementById('winner-el');
+  el.innerHTML = `
+    <img src="${dog.imageUrl}" alt="${dog.name}" draggable="false">
     <div class="w-name">${dog.name}</div>`;
+  // Re-trigger pop animation (works on first show AND on restart)
+  el.style.animation = 'none';
+  void el.offsetWidth; // force reflow
+  el.style.animation = 'wpop .6s cubic-bezier(.175,.885,.32,1.275) forwards';
   // Fun sub-text
   const msgs = [
     'זה הכלב שלך! 🐾',
