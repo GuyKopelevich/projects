@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>🐕 בחירת הכלב הבא שלי</title>
+  <style>
+    /* ─── RESET ──────────────────────────────────────────────── */
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body { height: 100%; overflow: hidden; }
+
+    :root {
+      --grad-a: #667eea;
+      --grad-b: #764ba2;
+      --like:   #22c55e;
+      --nope:   #ef4444;
+      --gold:   #f59e0b;
+      --white:  #ffffff;
+      --dark:   #1e293b;
+      --muted:  #64748b;
+      --radius: 22px;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      user-select: none; touch-action: none;
+    }
+
+    /* ─── SCREENS ─────────────────────────────────────────────── */
+    .screen {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .screen.active { opacity: 1; pointer-events: all; }
+
+    /* ─── LOADING ─────────────────────────────────────────────── */
+    #screen-loading { color: white; text-align: center; }
+    .loading-dog {
+      font-size: 4rem;
+      animation: bounce 0.7s ease-in-out infinite alternate;
+    }
+    @keyframes bounce { to { transform: translateY(-18px); } }
+
+    /* ─── SWIPE PHASE ─────────────────────────────────────────── */
+    .swipe-header { text-align: center; color: white; direction: rtl; }
+    .swipe-header h1 {
+      font-size: clamp(1rem, 4.5vw, 1.35rem);
+      font-weight: 800;
+      text-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .swipe-hint { font-size: .78rem; opacity: .72; margin-top: 4px; }
+
+    /* Card stack */
+    .card-stack {
+      position: relative;
+      width:  min(310px, 88vw);
+      height: min(430px, 64vh);
+    }
+
+    .dog-card {
+      position: absolute; inset: 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--white);
+      box-shadow: 0 12px 40px rgba(0,0,0,.28);
+      will-change: transform;
+    }
+    .dog-card.top-card  { z-index: 2; cursor: grab; }
+    .dog-card.back-card {
+      z-index: 1;
+      transform: scale(.94) translateY(13px);
+      pointer-events: none;
+    }
+    .dog-card .card-img {
+      width: 100%; height: 76%;
+      object-fit: cover; display: block;
+      pointer-events: none; draggable: false;
+    }
+    .dog-card .card-body { padding: 11px 15px; }
+    .dog-card .card-name { font-size: 1.25rem; font-weight: 700; color: var(--dark); direction: rtl; }
+    .dog-card .card-sub  { font-size: .76rem; color: var(--muted); margin-top: 2px; direction: rtl; }
+
+    /* Swipe overlays */
+    .swipe-ol {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius);
+      opacity: 0; pointer-events: none; z-index: 5;
+    }
+    .ol-like { background: rgba(34,197,94,.78); }
+    .ol-nope { background: rgba(239,68,68,.78); }
+    .ol-stamp {
+      font-size: 1.7rem; font-weight: 900; color: white;
+      padding: 7px 16px;
+      border: 3px solid white; border-radius: 10px;
+      text-shadow: 0 2px 4px rgba(0,0,0,.3);
+      letter-spacing: 2px;
+    }
+    .ol-like .ol-stamp { transform: rotate(-14deg); }
+    .ol-nope .ol-stamp { transform: rotate( 14deg); }
+
+    /* Action buttons */
+    .action-row { display: flex; align-items: center; gap: 26px; direction: ltr; }
+    .act-btn {
+      width: 60px; height: 60px; border-radius: 50%;
+      border: none; font-size: 1.55rem; cursor: pointer;
+      background: var(--white);
+      box-shadow: 0 4px 16px rgba(0,0,0,.2);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .act-btn:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+    .act-btn:active { transform: scale(.93); }
+
+    /* Progress */
+    .prog-wrap { width: min(310px, 88vw); display: flex; flex-direction: column; gap: 5px; }
+    .prog-bar  { height: 6px; background: rgba(255,255,255,.3); border-radius: 3px; overflow: hidden; }
+    .prog-fill { height: 100%; background: white; border-radius: 3px; transition: width .4s ease; }
+    .prog-lbl  { font-size: .76rem; color: rgba(255,255,255,.68); text-align: center; direction: rtl; }
+    .kb-hint   { font-size: .7rem;  color: rgba(255,255,255,.45); text-align: center; }
+
+    /* ─── TOURNAMENT ──────────────────────────────────────────── */
+    #screen-tournament { max-width: 680px; width: 100%; gap: 16px; }
+
+    .tourn-header { text-align: center; color: white; direction: rtl; }
+    .tourn-header h2 {
+      font-size: clamp(1.1rem, 4.5vw, 1.5rem);
+      font-weight: 800;
+      text-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .tourn-header p { font-size: .82rem; opacity: .72; margin-top: 4px; }
+
+    .matchup-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; width: 100%;
+    }
+
+    .t-card {
+      flex: 1; max-width: 230px;
+      border-radius: 18px; overflow: hidden;
+      background: var(--white);
+      box-shadow: 0 8px 28px rgba(0,0,0,.25);
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .t-card:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 14px 38px rgba(0,0,0,.35);
+    }
+    .t-card:active { transform: scale(.96); }
+    .t-card img {
+      width: 100%; height: clamp(130px, 20vh, 210px);
+      object-fit: cover; display: block; pointer-events: none;
+    }
+    .t-card .t-name {
+      text-align: center; padding: 9px 8px;
+      font-weight: 700; font-size: clamp(.82rem, 2.5vw, .95rem);
+      color: var(--dark); direction: rtl;
+    }
+
+    .vs-badge {
+      font-size: clamp(1.3rem, 5vw, 2rem);
+      font-weight: 900; color: white;
+      text-shadow: 0 2px 10px rgba(0,0,0,.4);
+      flex-shrink: 0;
+    }
+
+    .tourn-counter { font-size: .78rem; color: rgba(255,255,255,.6); text-align: center; direction: rtl; }
+
+    /* transition feedback */
+    .winner-flash {
+      outline: 4px solid var(--gold);
+      box-shadow: 0 0 0 4px var(--gold), 0 14px 40px rgba(0,0,0,.3) !important;
+    }
+    .loser-dim { opacity: .3; transform: scale(.92) !important; }
+
+    /* ─── WINNER ──────────────────────────────────────────────── */
+    #screen-winner { color: white; text-align: center; gap: 10px; direction: rtl; }
+
+    .winner-title {
+      font-size: clamp(1.4rem, 5vw, 2rem);
+      font-weight: 900;
+      text-shadow: 0 2px 10px rgba(0,0,0,.3);
+      animation: wpulse 1.6s ease-in-out infinite;
+    }
+    @keyframes wpulse {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.04); }
+    }
+
+    .winner-card {
+      width: min(250px, 74vw);
+      border-radius: 20px; overflow: hidden;
+      background: var(--white);
+      box-shadow: 0 16px 50px rgba(0,0,0,.38);
+      animation: wpop .6s cubic-bezier(.175,.885,.32,1.275) forwards;
+    }
+    @keyframes wpop {
+      from { transform: scale(0) rotate(-12deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg);  opacity: 1; }
+    }
+    .winner-card img {
+      width: 100%; height: clamp(210px, 33vh, 290px);
+      object-fit: cover; display: block;
+    }
+    .winner-card .w-name {
+      text-align: center; padding: 13px;
+      font-size: 1.15rem; font-weight: 700; color: var(--dark);
+    }
+
+    .winner-sub { font-size: .88rem; opacity: .78; }
+
+    .restart-btn {
+      margin-top: 4px; padding: 11px 26px;
+      background: rgba(255,255,255,.18);
+      border: 2px solid rgba(255,255,255,.55);
+      color: white; border-radius: 50px;
+      font-size: .92rem; font-weight: 700; cursor: pointer;
+      transition: background .2s, transform .15s;
+      backdrop-filter: blur(8px);
+    }
+    .restart-btn:hover { background: rgba(255,255,255,.32); transform: scale(1.05); }
+    .restart-btn:active { transform: scale(.97); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     LOADING
+══════════════════════════════════════════════════════════════ -->
+<div class="screen active" id="screen-loading">
+  <div class="loading-dog">🐕</div>
+  <h2 style="font-size:1.45rem;font-weight:800;color:white;">טוען כלבים...</h2>
+  <p id="loading-msg" style="color:rgba(255,255,255,.7);font-size:.88rem;direction:rtl;">
+    מביא את הידידים המפנקים שלך
+  </p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SWIPE PHASE
+══════════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-swipe">
+  <div class="swipe-header">
+    <h1>🐕 בחר את הכלב הבא שלך</h1>
+    <div class="swipe-hint">החלק ימינה ❤️ אם אוהב · שמאלה ✕ אם לא</div>
+  </div>
+
+  <div class="card-stack" id="card-stack"></div>
+
+  <div class="action-row">
+    <button class="act-btn" id="btn-nope" title="לא מתאים">✕</button>
+    <button class="act-btn" id="btn-like" title="אוהב!">❤️</button>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-bar">
+      <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+    <div class="prog-lbl" id="prog-lbl">0 / 0 כלבים</div>
+  </div>
+
+  <div class="kb-hint">← מקלדת: חצים שמאל/ימין →</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TOURNAMENT
+══════════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-tournament">
+  <div class="tourn-header">
+    <h2 id="t-title">🏆 תחרות!</h2>
+    <p  id="t-sub">לחץ על הכלב שאתה מעדיף</p>
+  </div>
+  <div class="matchup-row" id="matchup-row"></div>
+  <div class="tourn-counter" id="t-counter"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     WINNER
+══════════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-winner">
+  <span style="font-size:3rem">🏆</span>
+  <div class="winner-title">המנצח הוא...</div>
+  <div class="winner-card" id="winner-el"></div>
+  <div class="winner-sub" id="winner-sub">זה הכלב שלך! 🐾</div>
+  <button class="restart-btn" id="btn-restart">🔄 שחק שוב</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SCRIPT
+══════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ─── BREED DATA ──────────────────────────────────────────────────────── */
+const BREEDS = [
+  { name: 'גולדן רטריבר',   breed: 'retriever',      sub: 'golden'     },
+  { name: 'לברדור',          breed: 'labrador',       sub: null         },
+  { name: 'רועה גרמני',      breed: 'germanshepherd', sub: null         },
+  { name: 'בולדוג צרפתי',    breed: 'bulldog',        sub: 'french'     },
+  { name: 'פודל',             breed: 'poodle',         sub: null         },
+  { name: 'בורדר קולי',      breed: 'collie',         sub: 'border'     },
+  { name: 'האסקי סיבירי',    breed: 'husky',          sub: null         },
+  { name: 'ביגל',             breed: 'beagle',         sub: null         },
+  { name: 'שיבא אינו',       breed: 'shiba',          sub: null         },
+  { name: 'קורגי',            breed: 'corgi',          sub: 'cardigan'   },
+  { name: 'דלמטי',            breed: 'dalmatian',      sub: null         },
+  { name: 'פומרניאן',         breed: 'pomeranian',     sub: null         },
+  { name: 'דקסהונד',          breed: 'dachshund',      sub: null         },
+  { name: 'רוטוויילר',        breed: 'rottweiler',     sub: null         },
+  { name: 'רועה אוסטרלי',    breed: 'shepherd',       sub: 'australian' },
+  { name: 'בוקסר',            breed: 'boxer',          sub: null         },
+];
+
+/* ─── STATE ───────────────────────────────────────────────────────────── */
+let dogs        = [];   // { name, imageUrl }[]
+let cardIndex   = 0;
+let likedDogs   = [];
+let busy        = false;
+
+// Tournament
+let tRound      = [];   // dogs remaining in this round
+let tWinners    = [];   // winners so far
+let tPtr        = 0;    // index into tRound (steps +2)
+let tRoundNum   = 1;
+let tTotalM     = 0;
+let tDoneM      = 0;
+
+// Swipe drag
+let dragSX      = 0, dragSY = 0, dragDX = 0;
+let dragging    = false;
+let topCard     = null;
+let backCard    = null;
+
+/* ─── HELPERS ─────────────────────────────────────────────────────────── */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ─── LOADING ─────────────────────────────────────────────────────────── */
+async function fetchBreed(b) {
+  const url = b.sub
+    ? `https://dog.ceo/api/breed/${b.breed}/${b.sub}/images/random`
+    : `https://dog.ceo/api/breed/${b.breed}/images/random`;
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.status === 'success') return { name: b.name, imageUrl: d.message };
+  } catch {}
+  return null;
+}
+
+async function loadAllDogs() {
+  const msg = document.getElementById('loading-msg');
+  let done = 0;
+  const results = await Promise.allSettled(
+    BREEDS.map(async b => {
+      const dog = await fetchBreed(b);
+      msg.textContent = `טוען... ${++done} / ${BREEDS.length}`;
+      return dog;
+    })
+  );
+  dogs = results
+    .filter(r => r.status === 'fulfilled' && r.value)
+    .map(r => r.value)
+    .sort(() => Math.random() - 0.5);
+
+  if (!dogs.length) {
+    msg.textContent = 'לא הצלחתי לטעון כלבים 😢 בדוק חיבור אינטרנט';
+    return;
+  }
+  beginSwipe();
+}
+
+/* ─── SWIPE PHASE ─────────────────────────────────────────────────────── */
+function beginSwipe() {
+  cardIndex = 0; likedDogs = [];
+  showScreen('screen-swipe');
+  renderStack();
+  refreshProgress();
+}
+
+function renderStack() {
+  const stack = document.getElementById('card-stack');
+  stack.innerHTML = '';
+  topCard = null; backCard = null;
+
+  if (cardIndex >= dogs.length) { endSwipe(); return; }
+
+  if (cardIndex + 1 < dogs.length) {
+    backCard = makeCard(dogs[cardIndex + 1], false);
+    stack.appendChild(backCard);
+  }
+  topCard = makeCard(dogs[cardIndex], true);
+  stack.appendChild(topCard);
+  attachDrag(topCard);
+}
+
+function makeCard(dog, isTop) {
+  const c = document.createElement('div');
+  c.className = `dog-card ${isTop ? 'top-card' : 'back-card'}`;
+  c.innerHTML = `
+    <img class="card-img" src="${dog.imageUrl}" alt="${dog.name}" draggable="false">
+    <div class="swipe-ol ol-like"><div class="ol-stamp">❤️ אוהב!</div></div>
+    <div class="swipe-ol ol-nope"><div class="ol-stamp">✕ לא</div></div>
+    <div class="card-body">
+      <div class="card-name">${dog.name}</div>
+      <div class="card-sub">גזע כלב</div>
+    </div>`;
+  return c;
+}
+
+function refreshProgress() {
+  const pct = dogs.length ? (cardIndex / dogs.length * 100) : 0;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-lbl').textContent  = `${cardIndex} / ${dogs.length} כלבים`;
+}
+
+/* ─── DRAG ────────────────────────────────────────────────────────────── */
+function attachDrag(card) {
+  card.addEventListener('mousedown',  onDS);
+  card.addEventListener('touchstart', onDS, { passive: true });
+}
+
+function onDS(e) {
+  if (busy) return;
+  dragging = true;
+  dragSX = e.touches ? e.touches[0].clientX : e.clientX;
+  dragSY = e.touches ? e.touches[0].clientY : e.clientY;
+  dragDX = 0;
+  topCard.style.transition = 'none';
+}
+
+function onDM(e) {
+  if (!dragging || !topCard) return;
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  const cy = e.touches ? e.touches[0].clientY : e.clientY;
+  dragDX = cx - dragSX;
+  const dy = (cy - dragSY) * 0.12;
+  const rot = dragDX * 0.07;
+  topCard.style.transform = `translate(${dragDX}px, ${dy}px) rotate(${rot}deg)`;
+
+  const like = topCard.querySelector('.ol-like');
+  const nope = topCard.querySelector('.ol-nope');
+  const T = 70;
+  if (dragDX > 18) {
+    like.style.opacity = Math.min(dragDX / T, 1);
+    nope.style.opacity = 0;
+  } else if (dragDX < -18) {
+    nope.style.opacity = Math.min(-dragDX / T, 1);
+    like.style.opacity = 0;
+  } else {
+    like.style.opacity = 0;
+    nope.style.opacity = 0;
+  }
+}
+
+function onDE() {
+  if (!dragging || !topCard) return;
+  dragging = false;
+  const T = 88;
+  if      (dragDX >  T) doSwipe('right');
+  else if (dragDX < -T) doSwipe('left');
+  else {
+    topCard.style.transition = 'transform .4s cubic-bezier(.175,.885,.32,1.275)';
+    topCard.style.transform  = '';
+    topCard.querySelector('.ol-like').style.opacity = 0;
+    topCard.querySelector('.ol-nope').style.opacity = 0;
+  }
+}
+
+document.addEventListener('mousemove', onDM);
+document.addEventListener('touchmove', onDM, { passive: true });
+document.addEventListener('mouseup',   onDE);
+document.addEventListener('touchend',  onDE);
+
+/* ─── SWIPE ACTION ────────────────────────────────────────────────────── */
+function doSwipe(dir) {
+  if (!topCard || busy) return;
+  busy = true;
+
+  const flyX = dir === 'right' ? '130vw' : '-130vw';
+  const rot  = dir === 'right' ? '30deg' : '-30deg';
+
+  topCard.querySelector(dir === 'right' ? '.ol-like' : '.ol-nope').style.opacity = 1;
+  topCard.style.transition = 'transform .45s ease-in, opacity .45s';
+  topCard.style.transform  = `translateX(${flyX}) rotate(${rot})`;
+  topCard.style.opacity    = '0';
+
+  if (backCard) {
+    backCard.style.transition = 'transform .45s ease-out';
+    backCard.style.transform  = 'scale(1) translateY(0)';
+  }
+
+  if (dir === 'right') likedDogs.push(dogs[cardIndex]);
+  cardIndex++;
+
+  setTimeout(() => {
+    busy = false;
+    refreshProgress();
+    renderStack();
+  }, 430);
+}
+
+/* ─── KEYBOARD & BUTTONS ──────────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('screen-swipe').classList.contains('active')) return;
+  if (e.key === 'ArrowRight') doSwipe('right');
+  if (e.key === 'ArrowLeft')  doSwipe('left');
+});
+document.getElementById('btn-like').addEventListener('click', () => doSwipe('right'));
+document.getElementById('btn-nope').addEventListener('click', () => doSwipe('left'));
+
+/* ─── END SWIPE ───────────────────────────────────────────────────────── */
+function endSwipe() {
+  if (likedDogs.length === 0) {
+    // Restart with a gentle message inside the card area
+    const stack = document.getElementById('card-stack');
+    stack.innerHTML = `
+      <div style="
+        position:absolute;inset:0;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;gap:12px;
+        background:white;border-radius:var(--radius);
+        color:var(--dark);text-align:center;padding:20px;direction:rtl;">
+        <div style="font-size:3rem">😅</div>
+        <div style="font-size:1.1rem;font-weight:700;">לא אהבת אף כלב?</div>
+        <div style="font-size:.85rem;color:var(--muted);">בוא ננסה שוב!</div>
+        <button onclick="restartGame()" style="
+          margin-top:8px;padding:10px 22px;
+          background:var(--grad-a);color:white;
+          border:none;border-radius:50px;
+          font-size:.9rem;font-weight:700;cursor:pointer;">
+          🔄 נסה שוב
+        </button>
+      </div>`;
+    return;
+  }
+  if (likedDogs.length === 1) { showWinner(likedDogs[0]); return; }
+  beginTournament();
+}
+
+/* ─── TOURNAMENT ──────────────────────────────────────────────────────── */
+function beginTournament() {
+  tRound    = [...likedDogs].sort(() => Math.random() - 0.5);
+  tWinners  = [];
+  tPtr      = 0;
+  tRoundNum = 1;
+  tTotalM   = likedDogs.length - 1;
+  tDoneM    = 0;
+  showScreen('screen-tournament');
+  showMatch();
+}
+
+function showMatch() {
+  // Round exhausted?
+  if (tPtr >= tRound.length) {
+    tRound    = tWinners;
+    tWinners  = [];
+    tPtr      = 0;
+    tRoundNum++;
+    if (tRound.length === 1) { showWinner(tRound[0]); return; }
+    showMatch();
+    return;
+  }
+
+  const a = tRound[tPtr];
+  const b = tRound[tPtr + 1];
+
+  // Bye – odd dog out advances automatically
+  if (!b) {
+    tWinners.push(a);
+    tPtr += 2;
+    showMatch();
+    return;
+  }
+
+  tDoneM++;
+
+  // Header text
+  const n = tRound.length;
+  const title = n === 2 ? '🏆 הגמר הגדול!' : n <= 4 ? '🥊 חצי גמר' : `🏅 סיבוב ${tRoundNum}`;
+  document.getElementById('t-title').textContent   = title;
+  document.getElementById('t-sub').textContent     = 'לחץ על הכלב שאתה מעדיף';
+  document.getElementById('t-counter').textContent =
+    `שלב ${tDoneM} מתוך ${tTotalM} · ${likedDogs.length - tDoneM} כלבים נותרו`;
+
+  // Render cards
+  const row = document.getElementById('matchup-row');
+  row.innerHTML = '';
+  const ca = makeTCard(a);
+  const vs = Object.assign(document.createElement('div'), { className: 'vs-badge', textContent: 'VS' });
+  const cb = makeTCard(b);
+
+  ca.addEventListener('click', () => pickWinner(a, ca, cb));
+  cb.addEventListener('click', () => pickWinner(b, cb, ca));
+
+  row.appendChild(ca);
+  row.appendChild(vs);
+  row.appendChild(cb);
+  busy = false;
+}
+
+function makeTCard(dog) {
+  const el = document.createElement('div');
+  el.className = 't-card';
+  el.innerHTML = `
+    <img src="${dog.imageUrl}" alt="${dog.name}" draggable="false">
+    <div class="t-name">${dog.name}</div>`;
+  return el;
+}
+
+function pickWinner(winner, winEl, loseEl) {
+  if (busy) return;
+  busy = true;
+
+  winEl.style.transition  = 'transform .3s, box-shadow .3s, outline .3s';
+  loseEl.style.transition = 'opacity .3s, transform .3s';
+  winEl.classList.add('winner-flash');
+  loseEl.classList.add('loser-dim');
+
+  tWinners.push(winner);
+  tPtr += 2;
+
+  setTimeout(showMatch, 650);
+}
+
+/* ─── WINNER ──────────────────────────────────────────────────────────── */
+function showWinner(dog) {
+  showScreen('screen-winner');
+  document.getElementById('winner-el').innerHTML = `
+    <img src="${dog.imageUrl}" alt="${dog.name}">
+    <div class="w-name">${dog.name}</div>`;
+  // Fun sub-text
+  const msgs = [
+    'זה הכלב שלך! 🐾',
+    'ברכות על הבחירה! 🎉',
+    `${dog.name} מחכה לך! 🐕`,
+    'הולך הביתה עם מנצח! 🏠',
+  ];
+  document.getElementById('winner-sub').textContent = msgs[Math.floor(Math.random() * msgs.length)];
+}
+
+/* ─── RESTART ─────────────────────────────────────────────────────────── */
+function restartGame() {
+  dogs = dogs.sort(() => Math.random() - 0.5);
+  busy = false;
+  beginSwipe();
+}
+document.getElementById('btn-restart').addEventListener('click', restartGame);
+
+/* ─── INIT ────────────────────────────────────────────────────────────── */
+loadAllDogs();
+</script>
+</body>
+</html>
