@@ -21,6 +21,7 @@ import Troubleshooting from "./pages/Troubleshooting";
 import Settings from "./pages/Settings";
 import Tools from "./pages/Tools";
 import NotFound from "./pages/NotFound";
+import AIAssistant from "./pages/AIAssistant";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/troubleshooting" element={<AppLayout><Troubleshooting /></AppLayout>} />
           <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
           <Route path="/tools" element={<AppLayout><Tools /></AppLayout>} />
+          <Route path="/ai" element={<AppLayout><AIAssistant /></AppLayout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

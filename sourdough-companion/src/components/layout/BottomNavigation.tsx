@@ -1,4 +1,4 @@
-import { Home, BookOpen, Calculator, GraduationCap, Settings } from 'lucide-react';
+import { Home, BookOpen, Calculator, GraduationCap, Bot } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -7,7 +7,7 @@ const navItems = [
   { path: '/tools', icon: Calculator, label: 'כלים' },
   { path: '/', icon: Home, label: 'בית', isCenter: true },
   { path: '/guides', icon: GraduationCap, label: 'ידע' },
-  { path: '/settings', icon: Settings, label: 'הגדרות' },
+  { path: '/ai', icon: Bot, label: 'עוזר AI' },
 ];
 
 export function BottomNavigation() {
