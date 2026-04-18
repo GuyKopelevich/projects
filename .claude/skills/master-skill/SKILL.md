@@ -5,101 +5,63 @@ description: Analyze the current project and automatically invoke all applicable
 
 # Master Skill
 
-Analyze the current project, decide which of the available skills are applicable, then invoke each of them sequentially via the Skill tool. DO NOT ask the user for approval between invocations — the user has pre-authorized this flow by invoking master-skill.
+Decide which of the available skills apply to this project and invoke them in order. Do NOT ask the user for approval between invocations — pre-authorized by invoking master-skill.
 
-## Source of Truth for Skill Names
+## Source of Truth
 
-The authoritative list of available skills is the `<system-reminder>` of this session under "available skills". Build a **deduplicated set** from that list (a skill that is installed at both user-level and project-level appears twice — treat as one). Do not invoke any skill whose name is not in that set. The table below describes the skills you can reason about; it is documentation, not the source of truth.
+Skill names and descriptions come from the `<system-reminder>` "available skills" block already in the conversation (no extra tool calls, no token cost). Build a **deduplicated set** of names from that block (a skill installed at both user and project level appears twice — treat as one). Never invoke a name outside this set.
 
 ## Safety Guards
 
-- **Never invoke `master-skill` from inside `master-skill`** — that is an infinite loop. Remove it from the queue if it ever appears.
-- **Never invoke skills in parallel** — later skills may depend on state produced by earlier ones.
-- **If a skill invocation fails**, report the error, continue with the remaining queue, and include the failure in the Step 4 report.
+- Never queue `master-skill` itself (infinite loop).
+- Never run queued skills in parallel — later skills may depend on earlier ones' writes.
+- If a skill invocation fails, log the error and continue the remaining queue.
 
-## Known Skills
+## Step 1 — Gather Signals (parallel, single batch)
 
-| Skill | What it does |
-|---|---|
-| `init` | Create a new `CLAUDE.md` documenting the codebase. |
-| `session-start-hook` | Create a `.claude/hooks/session-start.sh` that installs deps for Claude Code on the web, and register it in `.claude/settings.json`. |
-| `simplify` | Review the current diff for reuse, quality, and efficiency; fix issues found. |
-| `security-review` | Security review of changes on the current branch (SQLi, XSS, command injection, etc). |
-| `review` | Review a pull request. |
-| `claude-api` | Build/debug/optimize code that uses the Anthropic SDK (`anthropic` / `@anthropic-ai/sdk`): prompt caching, thinking, tool use, batch, files, citations, memory; model migrations. |
-| `fewer-permission-prompts` | Scan prior transcripts for repeated read-only Bash/MCP calls and add a prioritized allowlist to `.claude/settings.json`. |
-| `update-config` | Edit `settings.json` — permissions, env vars, hooks (SessionStart/PreToolUse/PostToolUse/Stop). Any "from now on when X" behavior requires a hook. |
-| `keybindings-help` | Customize `~/.claude/keybindings.json`. |
-| `loop` | Run a prompt or slash command on a recurring interval (e.g. `/loop 5m /foo`). |
+Run in parallel. Exclude `.claude/skills/**`, `node_modules/**`, `.git/**` from all greps.
 
-## Step 1 — Gather Project Signals (parallel)
+1. **Repo shape**: `ls` root. If multiple sibling dirs have their own manifest → monorepo; treat each as a sub-project.
+2. **Manifests** (any of): `package.json`, `pyproject.toml`, `requirements.txt`, `setup.py`, `Cargo.toml`, `go.mod`, `Gemfile`, `build.gradle*`, `settings.gradle*`, `pom.xml`, `build.sbt`, `*.csproj`, `*.sln`, `composer.json`, `pubspec.yaml`, `Package.swift`.
+3. **Package manager** (next to each `package.json`): `bun.lockb`→bun, `pnpm-lock.yaml`→pnpm, `yarn.lock`→yarn, else npm.
+4. **Claude config**: `CLAUDE.md` at root + per sub-project; `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks/session-start.sh`.
+5. **Git**: `git status --short`, `git diff --stat`, `git diff --cached --stat`, current branch.
+6. **Open PR**: call `mcp__github__list_pull_requests` with `head=<owner>:<branch>`, `state=open` if MCP available. Grab `.number` from first result. Soft-fail on error.
+7. **SDK use**: grep for `from anthropic|import anthropic|@anthropic-ai/sdk` in project source (respecting exclusions above).
+8. **Sensitive diff**: if diff non-empty, flag sensitive when changed path matches `(auth|login|session|crypto|password|secret|token|sql|query|db/|database|api/|endpoint|route|webhook)` (case-insensitive) OR diff content contains `SELECT|INSERT|UPDATE|DELETE|\bexec\b|\beval\b|dangerouslySet`.
 
-Run these in parallel (use `Read`, `Glob`, `Grep`, and `Bash` as appropriate). ALWAYS exclude `.claude/skills/**` and `node_modules/**` from greps and scans — those are not project code, and matching them causes false positives.
+## Step 2 — Build Queue
 
-Collect:
-
-- **Repo shape**: `ls` the repo root. Detect monorepos — if multiple sibling directories contain their own manifest files, treat each as its own sub-project.
-- **Manifests** (per sub-project if monorepo, else at root):
-  - JS/TS: `package.json`
-  - Python: `pyproject.toml`, `requirements.txt`, `setup.py`
-  - Rust: `Cargo.toml`
-  - Go: `go.mod`
-  - Ruby: `Gemfile`
-  - Android/JVM: `build.gradle`, `build.gradle.kts`, `settings.gradle*`, `pom.xml`, `build.sbt`
-  - .NET: `*.csproj`, `*.sln`
-  - PHP: `composer.json`
-  - Flutter/Dart: `pubspec.yaml`
-  - Swift: `Package.swift`
-- **Lockfiles (package-manager hint)**: alongside each `package.json`, note which lockfile is present — `bun.lockb` → bun, `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, otherwise npm. This becomes an arg to `session-start-hook`.
-- **Claude config**: `CLAUDE.md` at root and in each sub-project; `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks/`.
-- **Git state**: `git status --short`, `git diff --stat`, `git diff --cached --stat`, `git log --oneline -10`, current branch.
-- **GitHub PRs**: if a GitHub MCP tool is available, call `mcp__github__list_pull_requests` with `head=<owner>:<current-branch>` and `state=open`. Extract `.number` from the first result if any. If the MCP call errors, log it and continue — this is not fatal.
-- **SDK usage**: Grep for `from anthropic`, `import anthropic`, `@anthropic-ai/sdk`, excluding `.claude/` and `node_modules/`. Only project source files count.
-- **Changed-file sensitivity**: if `git diff` is non-empty, extract changed filenames. Mark "sensitive" if any changed path matches `(auth|login|session|crypto|password|secret|token|sql|query|db/|database|api/|endpoint|route|webhook)` (case-insensitive) or the diff content contains `SELECT|INSERT|UPDATE|DELETE|\bexec\b|\beval\b|dangerouslySet` (case-insensitive).
-
-Do not invoke any skill during Step 1.
-
-## Step 2 — Decide Which Skills to Invoke
-
-Evaluate the rules below in order. A rule fires only if its condition holds AND the skill name is in the deduplicated available-skills set. The queue inherits this order (so `init` runs before `session-start-hook`, which runs before `simplify`, etc.).
+Evaluate rules in order. A rule fires only if its condition holds AND the skill is in the available-skills set. Preserve rule order when building the queue.
 
 | # | Condition | Skill | Args |
 |---|---|---|---|
-| 1 | Non-monorepo: `CLAUDE.md` missing at repo root. Monorepo: at least one sub-project is missing its own `CLAUDE.md`. | `init` | monorepo: `"sub-projects missing CLAUDE.md: <comma-separated list>"` |
-| 2 | No `.claude/hooks/session-start.sh` AND at least one supported manifest exists anywhere in the repo | `session-start-hook` | `"package managers detected: <npm/bun/pnpm/yarn/gradle/pip/...>; manifests at: <paths>"` |
-| 3 | `git diff` (unstaged or staged) is non-empty, ignoring changes confined to `.claude/skills/**` and to `CLAUDE.md` | `simplify` | (none) |
-| 4 | Rule 3 fires AND the diff is marked "sensitive" per Step 1 | `security-review` | (none) |
-| 5 | An open PR exists for the current branch | `review` | `"PR #<number>"` |
-| 6 | SDK grep returned matches in project source | `claude-api` | `"SDK imports in: <file list>"` |
+| 1 | Non-monorepo: `CLAUDE.md` missing at root. Monorepo: at least one sub-project is missing its own `CLAUDE.md`. | `init` | monorepo: `"sub-projects missing CLAUDE.md: <list>"` |
+| 2 | No `.claude/hooks/session-start.sh` AND at least one manifest exists anywhere | `session-start-hook` | `"package managers: <list>; manifests at: <paths>"` |
+| 3 | `git diff` non-empty, ignoring `.claude/skills/**` and `CLAUDE.md` | `simplify` | (none) |
+| 4 | Rule 3 fires AND diff is sensitive | `security-review` | (none) |
+| 5 | Open PR for current branch found | `review` | `"PR #<number>"` |
+| 6 | SDK grep matched project source | `claude-api` | `"SDK imports in: <files>"` |
 
-Never auto-invoke these — require explicit user intent:
+**Fallback for new/unknown skills** — after evaluating the rules above, iterate any other name in the available-skills set NOT already considered. Read its description from the system-reminder. If its description trigger criteria match the Step 1 signals (e.g. a description like "when code imports X" matches a grep hit you already have), queue it. Use a neutral arg summarizing the matching signal.
 
-- `update-config` — needs a specific config change from the user
-- `keybindings-help` — needs a specific keybinding change
-- `loop` — needs an interval and target command
-- `fewer-permission-prompts` — noisy to auto-run; only on explicit request
-- `master-skill` — self-invocation guard
+**Never auto-queue** (require explicit user intent in the original invocation args):
+`update-config`, `keybindings-help`, `loop`, `fewer-permission-prompts`, `master-skill`.
 
-If no rules fired, the queue is empty. Skip to Step 4.
+## Step 3 — Announce and Invoke
 
-## Step 3 — Announce Then Invoke
+If queue empty: tell the user "no applicable skills" and stop.
 
-Before invoking anything, print a one-paragraph plan to the user:
+Otherwise print one line:
+> **Plan:** `<skill1>` → `<skill2>` → ... (reasons: ...)
 
-> **Plan:** I will invoke `<skill1>` (reason: …), then `<skill2>` (reason: …). Files likely to change: `<paths>`.
+Then invoke each via the Skill tool sequentially (wait for completion before the next). If a queued skill asks a mid-flow question, answer from Step 1 signals when possible.
 
-Then invoke each queued skill sequentially via the Skill tool with `skill=<name>` and `args=<prepared args>`. Wait for each to finish before starting the next.
+## Step 4 — Report
 
-If the invoked skill asks a mid-flow question, answer from the Step 1 signals when possible. Only break to the user if the decision cannot be inferred.
+One compact block:
 
-If the queue is empty, say so and stop — no skills to invoke.
-
-## Step 4 — Summary Report
-
-After every queued skill has completed (or failed), emit a concise report:
-
-- **Signals** (one line each: repo shape, manifests + package managers, git, PR, SDK)
-- **Skills invoked** (in order) + one-line outcome or error for each
-- **Files created or modified**
-- **Skills skipped** + reason (condition not met / not in available-skills set / requires explicit user intent)
-- **User actions still required** (e.g. approve a PR, resolve a merge conflict, enter a secret)
+- **Signals**: repo shape, manifests+pkgmgrs, git, PR, SDK (one line each)
+- **Invoked**: `skill` → one-line outcome (repeat per skill)
+- **Skipped**: `skill` → reason (rule miss / not in set / explicit-intent-only)
+- **Follow-ups**: anything the user must do next
