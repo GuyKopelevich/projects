@@ -65,7 +65,7 @@ Evaluate the rules below in order. A rule fires only if its condition holds AND 
 
 | # | Condition | Skill | Args |
 |---|---|---|---|
-| 1 | No `CLAUDE.md` at root (non-monorepo) OR no `CLAUDE.md` in any sub-project (monorepo) | `init` | in a monorepo: `"sub-projects missing CLAUDE.md: <list>"` |
+| 1 | Non-monorepo: `CLAUDE.md` missing at repo root. Monorepo: at least one sub-project is missing its own `CLAUDE.md`. | `init` | monorepo: `"sub-projects missing CLAUDE.md: <comma-separated list>"` |
 | 2 | No `.claude/hooks/session-start.sh` AND at least one supported manifest exists anywhere in the repo | `session-start-hook` | `"package managers detected: <npm/bun/pnpm/yarn/gradle/pip/...>; manifests at: <paths>"` |
 | 3 | `git diff` (unstaged or staged) is non-empty, ignoring changes confined to `.claude/skills/**` and to `CLAUDE.md` | `simplify` | (none) |
 | 4 | Rule 3 fires AND the diff is marked "sensitive" per Step 1 | `security-review` | (none) |
