@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="md_theme_primary">#6750A4</color>
+    <color name="md_theme_on_primary">#FFFFFF</color>
+    <color name="md_theme_surface">#FFFBFE</color>
+    <color name="recording_red">#E53935</color>
+    <color name="replay_green">#43A047</color>
+    <color name="fab_color">#6750A4</color>
+    <color name="fab_color_replaying">#1976D2</color>
+    <color name="fab_color_error">#C62828</color>
+</resources>

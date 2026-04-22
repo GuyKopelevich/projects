@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Action Recorder</string>
+    <string name="accessibility_service_label">Action Recorder Service</string>
+    <string name="accessibility_service_description">Records and replays your screen interactions</string>
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_recording">Stop Recording</string>
+    <string name="review_title">Recording Summary</string>
+    <string name="confirm_and_show_button">Confirm — Show Floating Button</string>
+    <string name="discard">Discard &amp; Record Again</string>
+    <string name="status_idle">Ready to record</string>
+    <string name="status_recording">Recording…</string>
+    <string name="replay_button_description">Tap to replay, long-press to dismiss</string>
+    <string name="permission_accessibility_title">Accessibility Permission Required</string>
+    <string name="permission_overlay_title">Overlay Permission Required</string>
+    <string name="open_accessibility_settings">Open Accessibility Settings</string>
+    <string name="open_overlay_settings">Open Overlay Settings</string>
+    <string name="permission_screen_title">Permissions Setup</string>
+    <string name="permission_accessibility_desc">Required so the app can detect and replay screen interactions.</string>
+    <string name="permission_overlay_desc">Required to show the floating replay button over other apps.</string>
+    <string name="granted">Granted ✓</string>
+    <string name="not_granted">Not Granted</string>
+    <string name="actions_recorded">%d actions recorded</string>
+    <string name="duration_label">Duration: %s</string>
+    <string name="no_actions">No actions recorded. Try again.</string>
+    <string name="service_disconnected">Accessibility service disconnected — re-enable in Settings</string>
+</resources>
